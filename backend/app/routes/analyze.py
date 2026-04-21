@@ -11,6 +11,7 @@ from app.services.bias_service import (
     load_dataframe_from_bytes,
     validate_required_columns,
 )
+from app.services.runtime_store import get_runtime_store
 
 router = APIRouter(tags=["analysis"])
 
@@ -93,7 +94,7 @@ async def analyze_bias(
         false_positive_rate_difference=false_positive_rate_difference,
     )
 
-    return AnalyzeResponse(
+    response = AnalyzeResponse(
         request=AnalyzeRequestMetadata(
             target_column=target_column,
             sensitive_attribute=sensitive_attribute,
@@ -107,3 +108,6 @@ async def analyze_bias(
         },
         flagged_issues=flagged_issues,
     )
+
+    get_runtime_store().latest_analysis = response.model_dump()
+    return response

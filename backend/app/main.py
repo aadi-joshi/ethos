@@ -4,6 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routes.analyze import router as analyze_router
 from app.routes.explain import router as explain_router
 from app.routes.health import router as health_router
+from app.routes.report import router as report_router
 from app.routes.recommend import router as recommend_router
 from app.routes.upload import router as upload_router
 
@@ -26,3 +27,4 @@ app.include_router(upload_router)
 app.include_router(analyze_router)
 app.include_router(explain_router)
 app.include_router(recommend_router)
+app.include_router(report_router)
