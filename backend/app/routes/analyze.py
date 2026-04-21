@@ -2,6 +2,7 @@ from fastapi import APIRouter, File, Form, HTTPException, UploadFile, status
 
 from app.services.bias_service import (
     calculate_demographic_parity_difference,
+    calculate_disparate_impact_ratio,
     calculate_selection_rate_by_group,
     load_dataframe_from_bytes,
     validate_required_columns,
@@ -57,11 +58,13 @@ async def analyze_bias(
         sensitive_attribute=sensitive_attribute,
     )
     demographic_parity_difference = calculate_demographic_parity_difference(group_metrics)
+    disparate_impact_ratio = calculate_disparate_impact_ratio(group_metrics)
 
     return {
         "group_metrics": group_metrics,
         "overall_bias": {
             "demographic_parity_difference": demographic_parity_difference,
+            "disparate_impact_ratio": disparate_impact_ratio,
         },
         "flagged_issues": [],
     }
