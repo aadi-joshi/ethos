@@ -1,12 +1,28 @@
 import { useMemo, useState } from "react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Legend,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [result, setResult] = useState(null);
+  const [analysisResult, setAnalysisResult] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
+  const [analysisError, setAnalysisError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [targetColumn, setTargetColumn] = useState("");
+  const [sensitiveAttribute, setSensitiveAttribute] = useState("");
+  const [groundTruthColumn, setGroundTruthColumn] = useState("");
 
   const previewHeaders = useMemo(() => {
     if (!result || result.preview_rows.length === 0) {
@@ -20,7 +36,9 @@ function App() {
     const file = event.target.files?.[0] ?? null;
     setSelectedFile(file);
     setResult(null);
+    setAnalysisResult(null);
     setErrorMessage("");
+    setAnalysisError("");
   };
 
   const onUpload = async (event) => {
@@ -34,6 +52,8 @@ function App() {
     setIsLoading(true);
     setErrorMessage("");
     setResult(null);
+    setAnalysisResult(null);
+    setAnalysisError("");
 
     try {
       const formData = new FormData();
@@ -51,12 +71,66 @@ function App() {
       }
 
       setResult(payload);
+      const detectedColumns = payload.columns ?? [];
+      setTargetColumn(detectedColumns[0] ?? "");
+      setSensitiveAttribute(detectedColumns[1] ?? detectedColumns[0] ?? "");
+      setGroundTruthColumn("");
     } catch (error) {
       setErrorMessage(error.message);
     } finally {
       setIsLoading(false);
     }
   };
+
+  const onAnalyze = async () => {
+    if (!selectedFile || !targetColumn || !sensitiveAttribute) {
+      setAnalysisError("Select target column and sensitive attribute to analyze bias.");
+      return;
+    }
+
+    setIsAnalyzing(true);
+    setAnalysisError("");
+    setAnalysisResult(null);
+
+    try {
+      const formData = new FormData();
+      formData.append("file", selectedFile);
+      formData.append("target_column", targetColumn);
+      formData.append("sensitive_attribute", sensitiveAttribute);
+      if (groundTruthColumn) {
+        formData.append("ground_truth_column", groundTruthColumn);
+      }
+
+      const response = await fetch(`${API_BASE_URL}/analyze`, {
+        method: "POST",
+        body: formData,
+      });
+
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.detail ?? "Bias analysis failed.");
+      }
+
+      setAnalysisResult(payload);
+    } catch (error) {
+      setAnalysisError(error.message);
+    } finally {
+      setIsAnalyzing(false);
+    }
+  };
+
+  const chartData = useMemo(() => {
+    if (!analysisResult) {
+      return [];
+    }
+
+    return Object.entries(analysisResult.group_metrics).map(([group, metrics]) => ({
+      group,
+      selectionRate: Number(metrics.selection_rate ?? 0),
+      falsePositiveRate: Number(metrics.false_positive_rate ?? 0),
+    }));
+  }, [analysisResult]);
 
   return (
     <main className="page">
@@ -116,6 +190,148 @@ function App() {
                 </tbody>
               </table>
             </div>
+
+            <h2>Bias Analysis Inputs</h2>
+            <div className="analysis-form">
+              <label>
+                Target Column
+                <select
+                  value={targetColumn}
+                  onChange={(event) => setTargetColumn(event.target.value)}
+                >
+                  {result.columns.map((column) => (
+                    <option key={column} value={column}>
+                      {column}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Sensitive Attribute
+                <select
+                  value={sensitiveAttribute}
+                  onChange={(event) => setSensitiveAttribute(event.target.value)}
+                >
+                  {result.columns.map((column) => (
+                    <option key={column} value={column}>
+                      {column}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                Ground Truth Column (optional)
+                <select
+                  value={groundTruthColumn}
+                  onChange={(event) => setGroundTruthColumn(event.target.value)}
+                >
+                  <option value="">Use target column</option>
+                  {result.columns.map((column) => (
+                    <option key={column} value={column}>
+                      {column}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <button type="button" onClick={onAnalyze} disabled={isAnalyzing}>
+                {isAnalyzing ? "Analyzing..." : "Analyze Bias"}
+              </button>
+            </div>
+
+            {analysisError && <p className="error">{analysisError}</p>}
+
+            {analysisResult && (
+              <section className="analysis-result">
+                <h2>Bias Metrics</h2>
+
+                <div className="table-wrapper">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Group</th>
+                        <th>Selection Rate</th>
+                        <th>False Positive Rate</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Object.entries(analysisResult.group_metrics).map(
+                        ([group, metrics]) => (
+                          <tr key={group}>
+                            <td>{group}</td>
+                            <td>{Number(metrics.selection_rate).toFixed(3)}</td>
+                            <td>{Number(metrics.false_positive_rate).toFixed(3)}</td>
+                          </tr>
+                        )
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="table-wrapper">
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>Demographic Parity Difference</th>
+                        <th>Disparate Impact Ratio</th>
+                        <th>False Positive Rate Difference</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>
+                          {Number(
+                            analysisResult.overall_bias.demographic_parity_difference
+                          ).toFixed(3)}
+                        </td>
+                        <td>
+                          {Number(
+                            analysisResult.overall_bias.disparate_impact_ratio
+                          ).toFixed(3)}
+                        </td>
+                        <td>
+                          {Number(
+                            analysisResult.overall_bias.false_positive_rate_difference
+                          ).toFixed(3)}
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <h3>Group Comparison Chart</h3>
+                <div className="chart-box">
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="group" />
+                      <YAxis domain={[0, 1]} />
+                      <Tooltip />
+                      <Legend />
+                      <Bar dataKey="selectionRate" name="Selection Rate" fill="#111827" />
+                      <Bar
+                        dataKey="falsePositiveRate"
+                        name="False Positive Rate"
+                        fill="#6b7280"
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <h3>Flagged Issues</h3>
+                {analysisResult.flagged_issues.length === 0 ? (
+                  <p>No fairness issues flagged for current thresholds.</p>
+                ) : (
+                  <ul>
+                    {analysisResult.flagged_issues.map((issue) => (
+                      <li key={issue}>{issue}</li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            )}
           </section>
         )}
       </section>
