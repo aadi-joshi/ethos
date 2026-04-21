@@ -63,15 +63,24 @@ def calculate_selection_rate_by_group(
     target_column: str,
     sensitive_attribute: str,
 ) -> dict[str, dict[str, float]]:
-    results: dict[str, dict[str, float]] = {}
+    working = dataframe[[sensitive_attribute, target_column]].assign(
+        __positive=_to_positive_series(dataframe[target_column])
+    )
 
-    for group_value, group_frame in dataframe.groupby(sensitive_attribute, dropna=False):
-        total = len(group_frame)
-        positives = int(group_frame[target_column].apply(_is_positive).sum())
+    grouped = (
+        working.groupby(sensitive_attribute, dropna=False)["__positive"]
+        .agg(["count", "sum"])
+        .reset_index()
+    )
+
+    results: dict[str, dict[str, float]] = {}
+    for _, row in grouped.iterrows():
+        total = float(row["count"])
+        positives = float(row["sum"])
         selection_rate = positives / total if total > 0 else 0.0
-        results[str(group_value)] = {
-            "count": float(total),
-            "positive_outcomes": float(positives),
+        results[str(row[sensitive_attribute])] = {
+            "count": total,
+            "positive_outcomes": positives,
             "selection_rate": selection_rate,
         }
 
@@ -104,6 +113,11 @@ def _is_positive(value: object) -> int:
     return int(normalized in POSITIVE_TOKENS)
 
 
+def _to_positive_series(series: pd.Series) -> pd.Series:
+    normalized = _normalize_series(series)
+    return normalized.isin(POSITIVE_TOKENS).astype(int)
+
+
 def _normalize_series(series: pd.Series) -> pd.Series:
     return series.astype(str).str.strip().str.lower()
 
@@ -114,20 +128,32 @@ def calculate_false_positive_rate_by_group(
     label_column: str,
     sensitive_attribute: str,
 ) -> dict[str, float]:
-    results: dict[str, float] = {}
+    working = dataframe[[sensitive_attribute, prediction_column, label_column]].assign(
+        __pred_positive=_to_positive_series(dataframe[prediction_column]),
+        __label_positive=_to_positive_series(dataframe[label_column]),
+    )
 
-    for group_value, group_frame in dataframe.groupby(sensitive_attribute, dropna=False):
-        actual_negative_mask = group_frame[label_column].apply(_is_positive) == 0
-        actual_negative_frame = group_frame[actual_negative_mask]
+    actual_negative = working[working["__label_positive"] == 0]
+    if actual_negative.empty:
+        groups = dataframe[sensitive_attribute].drop_duplicates().tolist()
+        return {str(group): 0.0 for group in groups}
 
-        if len(actual_negative_frame) == 0:
-            results[str(group_value)] = 0.0
-            continue
+    grouped = (
+        actual_negative.groupby(sensitive_attribute, dropna=False)["__pred_positive"]
+        .agg(["count", "sum"])
+        .reset_index()
+    )
 
-        false_positive_count = int(
-            actual_negative_frame[prediction_column].apply(_is_positive).sum()
+    results: dict[str, float] = {
+        str(group): 0.0 for group in dataframe[sensitive_attribute].drop_duplicates().tolist()
+    }
+
+    for _, row in grouped.iterrows():
+        total_negative = float(row["count"])
+        false_positive_count = float(row["sum"])
+        results[str(row[sensitive_attribute])] = (
+            false_positive_count / total_negative if total_negative > 0 else 0.0
         )
-        results[str(group_value)] = false_positive_count / len(actual_negative_frame)
 
     return results
 
