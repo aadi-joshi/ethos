@@ -132,6 +132,27 @@ function App() {
     }));
   }, [analysisResult]);
 
+  const overallBiasChartData = useMemo(() => {
+    if (!analysisResult) {
+      return [];
+    }
+
+    return [
+      {
+        metric: "Demographic Parity Diff",
+        value: Number(analysisResult.overall_bias.demographic_parity_difference ?? 0),
+      },
+      {
+        metric: "Disparate Impact Ratio",
+        value: Number(analysisResult.overall_bias.disparate_impact_ratio ?? 0),
+      },
+      {
+        metric: "FPR Difference",
+        value: Number(analysisResult.overall_bias.false_positive_rate_difference ?? 0),
+      },
+    ];
+  }, [analysisResult]);
+
   return (
     <main className="page">
       <section className="card">
@@ -316,6 +337,19 @@ function App() {
                         name="False Positive Rate"
                         fill="#6b7280"
                       />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                <h3>Overall Bias Metrics Chart</h3>
+                <div className="chart-box">
+                  <ResponsiveContainer width="100%" height={280}>
+                    <BarChart data={overallBiasChartData}>
+                      <CartesianGrid strokeDasharray="3 3" />
+                      <XAxis dataKey="metric" />
+                      <YAxis domain={[0, 1]} />
+                      <Tooltip />
+                      <Bar dataKey="value" name="Metric Value" fill="#374151" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
