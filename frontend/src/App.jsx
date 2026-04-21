@@ -12,6 +12,26 @@ import {
 
 const API_BASE_URL = "http://127.0.0.1:8000";
 
+function getBiasBadge(metricName, value) {
+  if (metricName === "disparate_impact_ratio") {
+    if (value >= 0.8) {
+      return { label: "Low", tone: "low" };
+    }
+    if (value >= 0.6) {
+      return { label: "Medium", tone: "medium" };
+    }
+    return { label: "High", tone: "high" };
+  }
+
+  if (value <= 0.1) {
+    return { label: "Low", tone: "low" };
+  }
+  if (value <= 0.2) {
+    return { label: "Medium", tone: "medium" };
+  }
+  return { label: "High", tone: "high" };
+}
+
 function App() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [result, setResult] = useState(null);
@@ -212,61 +232,75 @@ function App() {
               </table>
             </div>
 
-            <h2>Bias Analysis Inputs</h2>
-            <div className="analysis-form">
-              <label>
-                Target Column
-                <select
-                  value={targetColumn}
-                  onChange={(event) => setTargetColumn(event.target.value)}
-                >
-                  {result.columns.map((column) => (
-                    <option key={column} value={column}>
-                      {column}
-                    </option>
-                  ))}
-                </select>
-              </label>
+            <section className="panel">
+              <h2>Bias Analysis Inputs</h2>
+              <div className="analysis-form">
+                <label>
+                  Target Column
+                  <select
+                    value={targetColumn}
+                    onChange={(event) => setTargetColumn(event.target.value)}
+                  >
+                    {result.columns.map((column) => (
+                      <option key={column} value={column}>
+                        {column}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-              <label>
-                Sensitive Attribute
-                <select
-                  value={sensitiveAttribute}
-                  onChange={(event) => setSensitiveAttribute(event.target.value)}
-                >
-                  {result.columns.map((column) => (
-                    <option key={column} value={column}>
-                      {column}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                <label>
+                  Sensitive Attribute
+                  <select
+                    value={sensitiveAttribute}
+                    onChange={(event) => setSensitiveAttribute(event.target.value)}
+                  >
+                    {result.columns.map((column) => (
+                      <option key={column} value={column}>
+                        {column}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-              <label>
-                Ground Truth Column (optional)
-                <select
-                  value={groundTruthColumn}
-                  onChange={(event) => setGroundTruthColumn(event.target.value)}
-                >
-                  <option value="">Use target column</option>
-                  {result.columns.map((column) => (
-                    <option key={column} value={column}>
-                      {column}
-                    </option>
-                  ))}
-                </select>
-              </label>
+                <label>
+                  Ground Truth Column (optional)
+                  <select
+                    value={groundTruthColumn}
+                    onChange={(event) => setGroundTruthColumn(event.target.value)}
+                  >
+                    <option value="">Use target column</option>
+                    {result.columns.map((column) => (
+                      <option key={column} value={column}>
+                        {column}
+                      </option>
+                    ))}
+                  </select>
+                </label>
 
-              <button type="button" onClick={onAnalyze} disabled={isAnalyzing}>
-                {isAnalyzing ? "Analyzing..." : "Analyze Bias"}
-              </button>
-            </div>
+                <button type="button" onClick={onAnalyze} disabled={isAnalyzing}>
+                  {isAnalyzing ? "Analyzing..." : "Analyze Bias"}
+                </button>
+              </div>
+            </section>
 
             {analysisError && <p className="error">{analysisError}</p>}
 
             {analysisResult && (
               <section className="analysis-result">
                 <h2>Bias Metrics</h2>
+
+                <div className="badge-row">
+                  {Object.entries(analysisResult.overall_bias).map(([metricName, value]) => {
+                    const badge = getBiasBadge(metricName, Number(value));
+                    return (
+                      <div key={metricName} className="badge-card">
+                        <p className="badge-title">{metricName}</p>
+                        <div className={`badge badge-${badge.tone}`}>{badge.label}</div>
+                      </div>
+                    );
+                  })}
+                </div>
 
                 <div className="table-wrapper">
                   <table>
