@@ -41,10 +41,16 @@ function App() {
   const [result, setResult] = useState(null);
   const [analysisResult, setAnalysisResult] = useState(null);
   const [reportSnapshot, setReportSnapshot] = useState(null);
+  const [explanationResult, setExplanationResult] = useState(null);
+  const [recommendationResult, setRecommendationResult] = useState(null);
+  const [reportResult, setReportResult] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [analysisError, setAnalysisError] = useState("");
+  const [pipelineError, setPipelineError] = useState("");
+  const [reportError, setReportError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [isGeneratingReport, setIsGeneratingReport] = useState(false);
   const [targetColumn, setTargetColumn] = useState("");
   const [sensitiveAttribute, setSensitiveAttribute] = useState("");
   const [groundTruthColumn, setGroundTruthColumn] = useState("");
@@ -63,8 +69,13 @@ function App() {
     setResult(null);
     setAnalysisResult(null);
     setReportSnapshot(null);
+    setExplanationResult(null);
+    setRecommendationResult(null);
+    setReportResult(null);
     setErrorMessage("");
     setAnalysisError("");
+    setPipelineError("");
+    setReportError("");
   };
 
   const onUpload = async (event) => {
@@ -79,7 +90,12 @@ function App() {
     setErrorMessage("");
     setResult(null);
     setAnalysisResult(null);
+    setExplanationResult(null);
+    setRecommendationResult(null);
+    setReportResult(null);
     setAnalysisError("");
+    setPipelineError("");
+    setReportError("");
 
     try {
       const formData = new FormData();
@@ -140,6 +156,36 @@ function App() {
       }
 
       setAnalysisResult(payload);
+
+      const explainResponse = await fetch(`${API_BASE_URL}/explain`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ fairness_metrics: payload }),
+      });
+      const explainPayload = await explainResponse.json();
+      if (!explainResponse.ok) {
+        throw new Error(explainPayload.detail ?? "Explanation generation failed.");
+      }
+      setExplanationResult(explainPayload);
+
+      const recommendResponse = await fetch(`${API_BASE_URL}/recommend`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          overall_bias: payload.overall_bias,
+          flagged_issues: payload.flagged_issues,
+        }),
+      });
+      const recommendPayload = await recommendResponse.json();
+      if (!recommendResponse.ok) {
+        throw new Error(recommendPayload.detail ?? "Recommendation generation failed.");
+      }
+      setRecommendationResult(recommendPayload);
+
       setReportSnapshot({
         summary: {
           risk_level: "pending",
@@ -149,8 +195,31 @@ function App() {
       });
     } catch (error) {
       setAnalysisError(error.message);
+      setPipelineError(error.message);
     } finally {
       setIsAnalyzing(false);
+    }
+  };
+
+  const onGenerateReport = async () => {
+    setIsGeneratingReport(true);
+    setReportError("");
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/report`);
+      const payload = await response.json();
+
+      if (!response.ok) {
+        throw new Error(payload.detail ?? "Report generation failed.");
+      }
+
+      setReportResult(payload);
+      setReportSnapshot(payload.report);
+      setActiveView(VIEW_REPORT);
+    } catch (error) {
+      setReportError(error.message);
+    } finally {
+      setIsGeneratingReport(false);
     }
   };
 
@@ -339,6 +408,7 @@ function App() {
             </section>
 
             {analysisError && <p className="error">{analysisError}</p>}
+            {pipelineError && <p className="error">{pipelineError}</p>}
 
             {analysisResult && (
               <section className="analysis-result">
@@ -453,6 +523,34 @@ function App() {
                   </ul>
                 )}
 
+                <h3>AI Explanation</h3>
+                <div className="panel">
+                  <p>
+                    {explanationResult?.explanation ??
+                      "Run analysis to generate a human-readable explanation."}
+                  </p>
+                </div>
+
+                <h3>Mitigation Recommendations</h3>
+                <div className="panel">
+                  {!recommendationResult ? (
+                    <p>Run analysis to generate recommendations.</p>
+                  ) : (
+                    <ul>
+                      {recommendationResult.recommendations.map((item, index) => (
+                        <li key={`${item.issue}-${index}`}>
+                          <strong>{item.issue}</strong>: {item.recommendation} ({item.impact})
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                {reportError && <p className="error">{reportError}</p>}
+                <button type="button" onClick={onGenerateReport} disabled={isGeneratingReport}>
+                  {isGeneratingReport ? "Generating Report..." : "Generate Report"}
+                </button>
+
                 <button type="button" onClick={() => setActiveView(VIEW_REPORT)}>
                   Open Report View
                 </button>
@@ -472,10 +570,21 @@ function App() {
                   Risk Level: <strong>{reportSnapshot.summary.risk_level}</strong>
                 </p>
                 <p>Generated At: {reportSnapshot.summary.generated_at}</p>
-                <p>
-                  Report is prepared from the latest analysis. Next step will connect this view
-                  to backend report, explanation, and recommendation APIs.
-                </p>
+                {reportResult?.file_path && <p>Report File: {reportResult.file_path}</p>}
+                <h3>Explanation</h3>
+                <p>{reportSnapshot.explanation ?? "No explanation available."}</p>
+                <h3>Recommendations</h3>
+                {reportSnapshot.recommendations?.length ? (
+                  <ul>
+                    {reportSnapshot.recommendations.map((item, index) => (
+                      <li key={`${item.issue}-${index}`}>
+                        <strong>{item.issue}</strong>: {item.recommendation} ({item.impact})
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>No recommendations available.</p>
+                )}
               </>
             )}
           </section>
