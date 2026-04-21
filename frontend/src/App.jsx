@@ -11,6 +11,9 @@ import {
 } from "recharts";
 
 const API_BASE_URL = "http://127.0.0.1:8000";
+const VIEW_UPLOAD = "upload";
+const VIEW_DASHBOARD = "dashboard";
+const VIEW_REPORT = "report";
 
 function getBiasBadge(metricName, value) {
   if (metricName === "disparate_impact_ratio") {
@@ -33,9 +36,11 @@ function getBiasBadge(metricName, value) {
 }
 
 function App() {
+  const [activeView, setActiveView] = useState(VIEW_UPLOAD);
   const [selectedFile, setSelectedFile] = useState(null);
   const [result, setResult] = useState(null);
   const [analysisResult, setAnalysisResult] = useState(null);
+  const [reportSnapshot, setReportSnapshot] = useState(null);
   const [errorMessage, setErrorMessage] = useState("");
   const [analysisError, setAnalysisError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -57,6 +62,7 @@ function App() {
     setSelectedFile(file);
     setResult(null);
     setAnalysisResult(null);
+    setReportSnapshot(null);
     setErrorMessage("");
     setAnalysisError("");
   };
@@ -95,6 +101,7 @@ function App() {
       setTargetColumn(detectedColumns[0] ?? "");
       setSensitiveAttribute(detectedColumns[1] ?? detectedColumns[0] ?? "");
       setGroundTruthColumn("");
+      setActiveView(VIEW_DASHBOARD);
     } catch (error) {
       setErrorMessage(error.message);
     } finally {
@@ -133,6 +140,13 @@ function App() {
       }
 
       setAnalysisResult(payload);
+      setReportSnapshot({
+        summary: {
+          risk_level: "pending",
+          generated_at: new Date().toISOString(),
+        },
+        metrics: payload,
+      });
     } catch (error) {
       setAnalysisError(error.message);
     } finally {
@@ -177,18 +191,58 @@ function App() {
     <main className="page">
       <section className="card">
         <h1>Ethos AI</h1>
-        <p className="subtext">Upload dataset for fairness analysis</p>
+        <p className="subtext">Fairness audit workflow</p>
 
-        <form className="upload-form" onSubmit={onUpload}>
-          <input type="file" accept=".csv" onChange={onFileChange} />
-          <button type="submit" disabled={isLoading}>
-            {isLoading ? "Uploading..." : "Upload CSV"}
+        <nav className="top-nav">
+          <button
+            type="button"
+            className={activeView === VIEW_UPLOAD ? "tab tab-active" : "tab"}
+            onClick={() => setActiveView(VIEW_UPLOAD)}
+          >
+            Upload Page
           </button>
-        </form>
+          <button
+            type="button"
+            className={activeView === VIEW_DASHBOARD ? "tab tab-active" : "tab"}
+            onClick={() => setActiveView(VIEW_DASHBOARD)}
+            disabled={!result}
+          >
+            Dashboard Page
+          </button>
+          <button
+            type="button"
+            className={activeView === VIEW_REPORT ? "tab tab-active" : "tab"}
+            onClick={() => setActiveView(VIEW_REPORT)}
+            disabled={!analysisResult}
+          >
+            Report View
+          </button>
+        </nav>
 
-        {errorMessage && <p className="error">{errorMessage}</p>}
+        {activeView === VIEW_UPLOAD && (
+          <section className="panel">
+            <h2>Upload Dataset</h2>
+            <form className="upload-form" onSubmit={onUpload}>
+              <input type="file" accept=".csv" onChange={onFileChange} />
+              <button type="submit" disabled={isLoading}>
+                {isLoading ? "Uploading..." : "Upload CSV"}
+              </button>
+            </form>
 
-        {result && (
+            {errorMessage && <p className="error">{errorMessage}</p>}
+
+            {result && (
+              <>
+                <p className="success-text">Dataset uploaded successfully.</p>
+                <button type="button" onClick={() => setActiveView(VIEW_DASHBOARD)}>
+                  Go to Dashboard
+                </button>
+              </>
+            )}
+          </section>
+        )}
+
+        {activeView === VIEW_DASHBOARD && result && (
           <section className="result">
             <h2>Dataset Summary</h2>
 
@@ -398,7 +452,31 @@ function App() {
                     ))}
                   </ul>
                 )}
+
+                <button type="button" onClick={() => setActiveView(VIEW_REPORT)}>
+                  Open Report View
+                </button>
               </section>
+            )}
+          </section>
+        )}
+
+        {activeView === VIEW_REPORT && (
+          <section className="panel">
+            <h2>Report View</h2>
+            {!reportSnapshot ? (
+              <p>Run bias analysis from Dashboard to prepare report content.</p>
+            ) : (
+              <>
+                <p>
+                  Risk Level: <strong>{reportSnapshot.summary.risk_level}</strong>
+                </p>
+                <p>Generated At: {reportSnapshot.summary.generated_at}</p>
+                <p>
+                  Report is prepared from the latest analysis. Next step will connect this view
+                  to backend report, explanation, and recommendation APIs.
+                </p>
+              </>
             )}
           </section>
         )}
