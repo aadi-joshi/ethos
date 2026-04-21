@@ -4,6 +4,9 @@ from io import StringIO
 
 import pandas as pd
 
+POSITIVE_TOKENS = {"1", "1.0", "true", "yes", "positive", "approved"}
+NEGATIVE_TOKENS = {"0", "0.0", "false", "no", "negative", "rejected"}
+
 
 def load_dataframe_from_bytes(raw_bytes: bytes) -> pd.DataFrame:
     decoded = raw_bytes.decode("utf-8-sig")
@@ -19,6 +22,40 @@ def validate_required_columns(
     if missing:
         missing_text = ", ".join(missing)
         raise ValueError(f"Missing required column(s): {missing_text}")
+
+
+def validate_binary_like_column(dataframe: pd.DataFrame, column_name: str) -> None:
+    series = dataframe[column_name]
+
+    if series.isna().any():
+        raise ValueError(
+            f"Column '{column_name}' contains missing values. Fill null values before analysis."
+        )
+
+    normalized = _normalize_series(series)
+    allowed_values = POSITIVE_TOKENS | NEGATIVE_TOKENS
+    invalid_values = sorted(set(normalized[~normalized.isin(allowed_values)].tolist()))
+
+    if invalid_values:
+        preview = ", ".join(invalid_values[:5])
+        raise ValueError(
+            f"Column '{column_name}' must be binary-like (0/1, true/false, yes/no). Invalid values: {preview}"
+        )
+
+
+def validate_sensitive_attribute(dataframe: pd.DataFrame, column_name: str) -> None:
+    series = dataframe[column_name]
+
+    if series.isna().any():
+        raise ValueError(
+            f"Sensitive attribute '{column_name}' contains missing values. Fill null values before analysis."
+        )
+
+    unique_count = int(series.nunique(dropna=True))
+    if unique_count < 2:
+        raise ValueError(
+            f"Sensitive attribute '{column_name}' must contain at least two distinct groups."
+        )
 
 
 def calculate_selection_rate_by_group(
@@ -64,7 +101,11 @@ def calculate_disparate_impact_ratio(
 
 def _is_positive(value: object) -> int:
     normalized = str(value).strip().lower()
-    return int(normalized in {"1", "1.0", "true", "yes", "positive", "approved"})
+    return int(normalized in POSITIVE_TOKENS)
+
+
+def _normalize_series(series: pd.Series) -> pd.Series:
+    return series.astype(str).str.strip().str.lower()
 
 
 def calculate_false_positive_rate_by_group(

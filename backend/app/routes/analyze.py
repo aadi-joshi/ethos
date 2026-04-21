@@ -9,7 +9,9 @@ from app.services.bias_service import (
     calculate_false_positive_rate_difference,
     calculate_selection_rate_by_group,
     load_dataframe_from_bytes,
+    validate_binary_like_column,
     validate_required_columns,
+    validate_sensitive_attribute,
 )
 from app.services.runtime_store import get_runtime_store
 
@@ -23,6 +25,18 @@ async def analyze_bias(
     sensitive_attribute: str = Form(...),
     ground_truth_column: str | None = Form(default=None),
 ) -> AnalyzeResponse:
+    if not target_column.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="target_column is required.",
+        )
+
+    if not sensitive_attribute.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="sensitive_attribute is required.",
+        )
+
     if not file.filename or not file.filename.lower().endswith(".csv"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -49,6 +63,9 @@ async def analyze_bias(
             dataframe,
             [target_column, sensitive_attribute, label_column],
         )
+        validate_binary_like_column(dataframe, target_column)
+        validate_binary_like_column(dataframe, label_column)
+        validate_sensitive_attribute(dataframe, sensitive_attribute)
     except ValueError as error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
