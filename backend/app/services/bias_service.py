@@ -42,6 +42,15 @@ def calculate_selection_rate_by_group(
     return results
 
 
+def calculate_demographic_parity_difference(
+    group_metrics: dict[str, dict[str, float]],
+) -> float:
+    rates = [metrics["selection_rate"] for metrics in group_metrics.values()]
+    if not rates:
+        return 0.0
+    return max(rates) - min(rates)
+
+
 def _is_positive(value: object) -> int:
     normalized = str(value).strip().lower()
     return int(normalized in {"1", "1.0", "true", "yes", "positive", "approved"})
