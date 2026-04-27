@@ -184,3 +184,116 @@ def build_flagged_issues(
         issues.append("False positive rates differ significantly across groups.")
 
     return issues
+
+
+# ---------------------------------------------------------------------------
+# Additional metrics (research standard set — 6 total)
+# ---------------------------------------------------------------------------
+
+def calculate_true_positive_rate_by_group(
+    dataframe: pd.DataFrame,
+    prediction_column: str,
+    label_column: str,
+    sensitive_attribute: str,
+) -> dict[str, float]:
+    """True Positive Rate (Recall) per group. Required for AOD and EOD."""
+    working = dataframe[[sensitive_attribute, prediction_column, label_column]].assign(
+        __pred_positive=_to_positive_series(dataframe[prediction_column]),
+        __label_positive=_to_positive_series(dataframe[label_column]),
+    )
+    actual_positive = working[working["__label_positive"] == 1]
+    if actual_positive.empty:
+        return {str(g): 0.0 for g in dataframe[sensitive_attribute].unique()}
+
+    grouped = (
+        actual_positive.groupby(sensitive_attribute, dropna=False)["__pred_positive"]
+        .agg(["count", "sum"])
+        .reset_index()
+    )
+    results: dict[str, float] = {
+        str(g): 0.0 for g in dataframe[sensitive_attribute].drop_duplicates()
+    }
+    for _, row in grouped.iterrows():
+        total = float(row["count"])
+        tp = float(row["sum"])
+        results[str(row[sensitive_attribute])] = tp / total if total > 0 else 0.0
+    return results
+
+
+def calculate_equal_opportunity_difference(
+    true_positive_rates: dict[str, float],
+) -> float:
+    """
+    Equal Opportunity Difference: max(TPR) - min(TPR).
+    Measures whether the model gives equally high recall across groups.
+    Ideal value: 0. Threshold: > 0.1 flagged.
+    """
+    rates = list(true_positive_rates.values())
+    if not rates:
+        return 0.0
+    return max(rates) - min(rates)
+
+
+def calculate_average_odds_difference(
+    false_positive_rates: dict[str, float],
+    true_positive_rates: dict[str, float],
+) -> float:
+    """
+    Average Odds Difference: average of FPR diff and TPR diff.
+    The gold standard for 'equalized odds' fairness.
+    Ideal value: 0. Threshold: > 0.1 flagged.
+    """
+    fpr_vals = list(false_positive_rates.values())
+    tpr_vals = list(true_positive_rates.values())
+    if not fpr_vals or not tpr_vals:
+        return 0.0
+    fpr_diff = max(fpr_vals) - min(fpr_vals)
+    tpr_diff = max(tpr_vals) - min(tpr_vals)
+    return (fpr_diff + tpr_diff) / 2.0
+
+
+def calculate_theil_index(
+    group_metrics: dict[str, dict[str, float]],
+) -> float:
+    """
+    Theil Index (entropy-based inequality measure).
+    Captures both between-group and within-group variation.
+    Ideal value: 0. Any positive value indicates inequality.
+    """
+    import math
+
+    rates = [m["selection_rate"] for m in group_metrics.values() if m["selection_rate"] > 0]
+    if not rates:
+        return 0.0
+
+    mu = sum(rates) / len(rates)
+    if mu == 0:
+        return 0.0
+
+    theil = sum((r / mu) * math.log(r / mu) for r in rates if r > 0)
+    return max(0.0, theil / len(rates))
+
+
+def build_flagged_issues_extended(
+    dpd: float,
+    dir_ratio: float,
+    fpr_diff: float,
+    eod: float,
+    aod: float,
+    theil: float,
+) -> list[str]:
+    """Extended issue detection covering all 6 metrics."""
+    issues: list[str] = []
+    if dpd > 0.1:
+        issues.append("High demographic parity difference detected.")
+    if 0 < dir_ratio < 0.8:
+        issues.append("Disparate impact ratio is below the 80% fairness threshold.")
+    if fpr_diff > 0.1:
+        issues.append("False positive rates differ significantly across groups.")
+    if eod > 0.1:
+        issues.append("Equal opportunity difference is high — recall is unequal across groups.")
+    if aod > 0.1:
+        issues.append("Average odds difference exceeds threshold — equalized odds not satisfied.")
+    if theil > 0.05:
+        issues.append("Theil Index indicates significant between-group outcome inequality.")
+    return issues
