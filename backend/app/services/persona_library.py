@@ -56,7 +56,7 @@ CASTE_UPPER = [
 CASTE_LOWER = [
     Persona("lower_caste", "Suresh Baudh", "male", "Nagpur, Maharashtra"),
     Persona("lower_caste", "Meena Paswan", "female", "Patna, Bihar"),
-    Persona("lower_caste", "Ravi Chamar", "male", "Kanpur, UP"),
+    Persona("lower_caste", "Ravi Chavhan", "male", "Kanpur, UP"),
     Persona("lower_caste", "Sangeeta Jadhav", "female", "Pune, Maharashtra"),
     Persona("lower_caste", "Dilip Kamble", "male", "Mumbai, Maharashtra"),
     Persona("lower_caste", "Kanchan Devi", "female", "Lucknow, UP"),

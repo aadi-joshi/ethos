@@ -231,7 +231,7 @@ function HomePage({ setPage }) {
   const stats = [
     { n: "4",   desc: "India-specific bias dimensions: caste, religion, gender, region — not covered by any existing tool" },
     { n: "6",   desc: "statistical fairness metrics per ML model audit, including DPD, DIR, and Theil Index" },
-    { n: "40+", desc: "counterfactual probe pairs per audit — statistically rigorous, Fisher's exact test significance" },
+    { n: "20",  desc: "counterfactual probe pairs per audit — identical prompts, only the demographic name signal changes" },
     { n: "1st", desc: "LLM bias auditing platform built for India's unique social and legal context" },
   ];
   const features = [
