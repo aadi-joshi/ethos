@@ -172,7 +172,7 @@ function Navbar({ page, setPage }) {
     <nav className="navbar">
       <div className="navbar-inner">
         <button className="navbar-brand" onClick={() => setPage("home")}>
-          <BrandMark size={22} />
+          <img src="/logo.png" alt="Ethos AI" className="brand-logo" />
           <span className="brand-name">Ethos AI</span>
           <span className="brand-tag">BETA</span>
         </button>
@@ -205,7 +205,7 @@ function Footer({ setPage }) {
       <div className="footer-inner">
         <div className="footer-brand">
           <div className="footer-brand-row">
-            <BrandMark size={20} />
+            <img src="/logo.png" alt="" className="footer-logo" />
             <strong>Ethos AI</strong>
           </div>
           <p>India's first accessible AI bias auditing platform.<br />
@@ -219,11 +219,7 @@ function Footer({ setPage }) {
         </div>
       </div>
       <div className="footer-bottom">
-        Built for Google Solution Challenge 2026 — Unbiased AI Decision Track
-        &nbsp;·&nbsp;
-        <a href="https://doi.org/10.1257/0002828042002561" target="_blank" rel="noopener noreferrer">Bertrand &amp; Mullainathan (2004)</a>
-        &nbsp;·&nbsp;
-        <a href="https://doi.org/10.1007/s10115-011-0463-8" target="_blank" rel="noopener noreferrer">Kamiran &amp; Calders (2012)</a>
+        © 2026 Ethos AI — Built for Google Solution Challenge 2026
       </div>
     </footer>
   );
@@ -268,34 +264,36 @@ function HomePage({ setPage }) {
   ];
 
   return (
-    <div className="page-content">
-      {/* Hero */}
-      <section className="hero">
-        <div className="hero-eyebrow">
-          Google Solution Challenge 2026 — Unbiased AI Decision
-        </div>
-        <h1 className="hero-title">
-          Bias doesn't hide.<br />
-          <span className="hero-accent">We expose it.</span>
-        </h1>
-        <p className="hero-sub">
-          India's first accessible LLM bias auditing platform. Counterfactual probing for
-          caste, gender, religion, and regional bias in AI systems making decisions about
-          real people's lives.
-        </p>
-        <div className="hero-divider" />
-        <div className="hero-actions">
-          <button className="btn-primary" onClick={() => setPage("probe")}>
-            Run LLM Probe <ChevronRight size={16} />
-          </button>
-          <button className="btn-outline" onClick={() => setPage("audit")}>
-            Audit ML Model
-          </button>
-        </div>
-        <div className="hero-disclaimer">
-          Test any AI system in minutes. Use the built-in Gemini probe or connect your own API.
+    <>
+      {/* Full-width dark hero */}
+      <section className="hero-dark">
+        <div className="hero-dark-inner">
+          <div className="hero-eyebrow">
+            Google Solution Challenge 2026 — Unbiased AI Decision
+          </div>
+          <h1 className="hero-title">
+            Does your AI<br />
+            <span className="hero-accent">treat everyone equally?</span>
+          </h1>
+          <p className="hero-sub">
+            India's first accessible AI bias auditing platform. Test any AI for caste, gender,
+            religion, and regional discrimination in hiring, lending, education, and healthcare.
+          </p>
+          <div className="hero-divider" style={{ background: "rgba(255,255,255,0.1)" }} />
+          <div className="hero-actions">
+            <button className="btn-primary" onClick={() => setPage("probe")}>
+              Run LLM Probe <ChevronRight size={16} />
+            </button>
+            <button className="btn-hero-outline" onClick={() => setPage("audit")}>
+              Audit ML Model
+            </button>
+          </div>
+          <div className="hero-disclaimer">
+            No login required. Free to use. Connect any AI system in minutes.
+          </div>
         </div>
       </section>
+      <div className="page-content">
 
       {/* Stats */}
       <section className="stats-row">
@@ -384,6 +382,7 @@ function HomePage({ setPage }) {
         </div>
       </section>
     </div>
+    </>
   );
 }
 
@@ -394,7 +393,7 @@ function ProbePage() {
   const [mode,      setMode]        = useState("gemini");
   const [template,  setTemplate]    = useState(DEFAULT_TEMPLATE);
   const [targetUrl, setTargetUrl]   = useState("");
-  const [nPerGroup, setNPerGroup]   = useState(20);
+  const [nPerGroup, setNPerGroup]   = useState(5);
   const [loading,   setLoading]     = useState(false);
   const [result,    setResult]      = useState(null);
   const [error,     setError]       = useState("");
@@ -498,12 +497,18 @@ function ProbePage() {
           </div>
 
           <div className="field-group">
-            <label>Samples per Group: <strong style={{ color: "var(--accent)" }}>{nPerGroup}</strong></label>
+            <label>Samples per Group: <strong style={{ color: "var(--accent)" }}>{Math.min(nPerGroup, mode === "gemini" ? 10 : 50)}</strong>
+              {mode === "gemini" && <span style={{ color: "var(--text-4)", fontSize: 11, fontWeight: 400, marginLeft: 6 }}>(max 10 — free tier)</span>}
+            </label>
             <input
-              type="range" min={5} max={50} value={nPerGroup}
+              type="range" min={3} max={mode === "gemini" ? 10 : 50}
+              value={Math.min(nPerGroup, mode === "gemini" ? 10 : 50)}
               onChange={e => setNPerGroup(Number(e.target.value))}
               className="slider"
             />
+            {mode === "gemini" && (
+              <p className="field-hint">~{Math.ceil(Math.min(nPerGroup, 10) * 2 * 5 / 60)} min est. Gemini free tier: 15 RPM.</p>
+            )}
           </div>
 
           <div className="field-group">
@@ -1038,7 +1043,7 @@ function BiasMapPage({ setPage }) {
   const [selected,   setSelected]  = useState(null);
   const [filterDim,  setFilterDim] = useState("all");
 
-  const maxCount = useMemo(() => mapData.length ? Math.max(...mapData.map(d => d.count)) : 1, [mapData]);
+  const maxCount = useMemo(() => mapData.length ? Math.max(...mapData.map(d => d.total || d.count || 0)) : 1, [mapData]);
   const filtered  = useMemo(() =>
     filterDim === "all" ? mapData : mapData.filter(d => d.dominant === filterDim),
     [mapData, filterDim]

@@ -17,10 +17,10 @@
   --text-3:    #928E87;
   --text-4:    #BAB5AE;
 
-  --accent:       #1B3A60;
-  --accent-hover: #122848;
-  --accent-dim:   rgba(27, 58, 96, 0.08);
-  --accent-border:rgba(27, 58, 96, 0.22);
+  --accent:       #1E40AF;
+  --accent-hover: #1A369B;
+  --accent-dim:   rgba(30, 64, 175, 0.08);
+  --accent-border:rgba(30, 64, 175, 0.22);
 
   --critical:  #B03A2E;
   --high:      #A0621A;
@@ -58,7 +58,7 @@ input, select, textarea { font-family: inherit; }
 
 /* ── Navbar ─────────────────────────────────────────────────────────────── */
 .navbar {
-  background: var(--bg);
+  background: #FFFFFF;
   border-bottom: 1px solid var(--border);
   position: sticky; top: 0; z-index: 100;
 }
@@ -1053,4 +1053,70 @@ input, select, textarea { font-family: inherit; }
   color: #7A4B10;
   margin-bottom: 12px;
   line-height: 1.5;
+}
+
+/* ── Logo images ────────────────────────────────────────────────────────── */
+.brand-logo {
+  height: 28px; width: 28px;
+  object-fit: contain; flex-shrink: 0;
+}
+.footer-logo {
+  height: 22px; width: 22px;
+  object-fit: contain; flex-shrink: 0;
+  filter: brightness(0) invert(0.85);
+}
+
+/* ── Dark hero (Metabase-style full-width) ──────────────────────────────── */
+.hero-dark {
+  background: #0F172A;
+  width: 100%;
+  padding: 96px 40px 88px;
+}
+.hero-dark-inner {
+  max-width: 1160px;
+  margin: 0 auto;
+}
+.hero-dark .hero-eyebrow {
+  color: rgba(255,255,255,0.45);
+}
+.hero-dark .hero-eyebrow::before {
+  background: #3B82F6;
+}
+.hero-dark .hero-title {
+  color: #FFFFFF;
+}
+.hero-dark .hero-accent {
+  color: #60A5FA;
+  font-style: italic;
+}
+.hero-dark .hero-sub {
+  color: rgba(255,255,255,0.65);
+}
+.hero-dark .hero-disclaimer {
+  color: rgba(255,255,255,0.35);
+}
+.hero-dark .hero-disclaimer::before {
+  background: #22C55E;
+}
+.hero-dark .hero-divider {
+  background: rgba(255,255,255,0.1) !important;
+}
+
+/* Hero outline button for dark background */
+.btn-hero-outline {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 22px; border-radius: var(--r);
+  background: transparent;
+  border: 1.5px solid rgba(255,255,255,0.25);
+  color: rgba(255,255,255,0.85);
+  font-size: 13.5px; font-weight: 500;
+  transition: all var(--t);
+}
+.btn-hero-outline:hover {
+  border-color: rgba(255,255,255,0.55);
+  color: #FFFFFF;
+}
+
+@media (max-width: 640px) {
+  .hero-dark { padding: 64px 24px 60px; }
 }

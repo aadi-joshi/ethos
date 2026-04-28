@@ -420,7 +420,7 @@ class ProbeService:
         results = []
         for i, p in enumerate(personas):
             if i > 0:
-                time.sleep(2)  # stay within free-tier 15 RPM limit
+                time.sleep(5)  # stay within free-tier 15 RPM limit
             prompt = self._fill_template(template, p)
             try:
                 response_text = self._gemini.generate_text(prompt)

@@ -34,7 +34,7 @@ async def run_probe(request: ProbeRunRequest) -> dict:
                 prompt_template=template,
                 dimension=request.dimension,
                 domain=request.domain,
-                n_per_group=min(request.n_per_group, 30),
+                n_per_group=min(request.n_per_group, 10),
                 group_a_key=request.group_a_key,
                 group_b_key=request.group_b_key,
             )
