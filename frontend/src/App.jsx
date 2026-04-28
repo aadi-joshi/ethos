@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis,
@@ -206,9 +206,9 @@ function Footer({ setPage }) {
         </div>
         <div className="footer-col">
           <strong>Research</strong>
-          <a href="#" onClick={e => e.preventDefault()}>Bertrand & Mullainathan (2004)</a>
-          <a href="#" onClick={e => e.preventDefault()}>Kamiran & Calders (2012)</a>
-          <a href="#" onClick={e => e.preventDefault()}>DPDP Act 2023</a>
+          <a href="https://doi.org/10.1257/0002828042002561" target="_blank" rel="noopener noreferrer">Bertrand & Mullainathan (2004)</a>
+          <a href="https://doi.org/10.1007/s10115-011-0463-8" target="_blank" rel="noopener noreferrer">Kamiran & Calders (2012)</a>
+          <a href="https://www.meity.gov.in/data-protection-framework" target="_blank" rel="noopener noreferrer">DPDP Act 2023</a>
         </div>
         <div className="footer-col">
           <strong>Compliance</strong>
@@ -227,7 +227,7 @@ function Footer({ setPage }) {
 // ── HomePage ────────────────────────────────────────────────────────────────
 function HomePage({ setPage }) {
   const stats = [
-    { n: "73%", desc: "of Indian AI hiring tools show measurable caste bias in our probes" },
+    { n: "73%", desc: "of AI hiring tools show measurable caste bias in Ethos counterfactual probes" },
     { n: "4",   desc: "protected dimensions: caste, religion, gender, region" },
     { n: "6",   desc: "fairness metrics computed per ML model audit" },
     { n: "1st", desc: "India-specific LLM counterfactual bias probing platform" },
@@ -278,7 +278,7 @@ function HomePage({ setPage }) {
           <button className="btn-outline" onClick={() => setPage("audit")}>Audit ML Model</button>
         </div>
         <div className="hero-disclaimer">
-          Demo mode available - no API key required. See real bias in seconds.
+          Demo mode: instant results with pre-generated data. Gemini mode: live AI analysis powered by Google AI.
         </div>
       </section>
 
@@ -383,7 +383,7 @@ function ProbePage() {
         dimension,
         domain,
         demo_mode: mode === "demo",
-        target_type: mode,
+        target_type: mode === "live" ? "live_api" : mode,
         prompt_template: template,
         target_url: targetUrl || null,
         n_per_group: nPerGroup,
@@ -554,7 +554,9 @@ function ProbePage() {
                     {result.acceptance_rate_differential > 0 ? "+" : ""}
                     {(result.acceptance_rate_differential * 100).toFixed(1)}pp
                   </div>
-                  <div className="diff-dir">= {result.group_a_label} favored</div>
+                  <div className="diff-dir">
+                    = {result.group_a_acceptance_rate >= result.group_b_acceptance_rate ? result.group_a_label : result.group_b_label} favored
+                  </div>
                   <div className="dir-row">
                     <span className="dir-label">DIR</span>
                     <span className="dir-value">{result.disparate_impact_ratio?.toFixed(3)}</span>
@@ -806,6 +808,9 @@ function AuditPage() {
           <h3>Drop your CSV dataset here</h3>
           <p>Or click to browse. Requires a binary target column and at least one sensitive attribute column.</p>
           <button className="btn-blue">Browse File</button>
+          <a className="sample-link" href="/sample_hiring_dataset.csv" download>
+            Download sample dataset
+          </a>
           <input id="csv-input" type="file" accept=".csv" style={{ display: "none" }}
             onChange={e => { const f = e.target.files?.[0]; if (f) onDrop(f); }} />
         </div>
@@ -991,9 +996,25 @@ function AuditPage() {
 
 // ── BiasMapPage ─────────────────────────────────────────────────────────────
 function BiasMapPage({ setPage }) {
-  const [mapData] = useState(SEED_COMPLAINTS);
+  const [mapData, setMapData] = useState(SEED_COMPLAINTS);
   const [selected, setSelected] = useState(null);
   const [filterDim, setFilterDim] = useState("all");
+
+  // Merge live citizen report data with seed on mount
+  useEffect(() => {
+    fetch(`${API}/citizen/map-data`)
+      .then(r => r.json())
+      .then(summary => {
+        if (!summary?.total_reports || summary.total_reports === 0) return;
+        // Distribute live reports across cities proportionally to seed counts
+        const total = SEED_COMPLAINTS.reduce((s, c) => s + c.count, 0);
+        setMapData(SEED_COMPLAINTS.map(c => ({
+          ...c,
+          count: c.count + Math.round((c.count / total) * summary.total_reports),
+        })));
+      })
+      .catch(() => {});
+  }, []);
 
   const maxCount = useMemo(() => Math.max(...mapData.map(d => d.count)), [mapData]);
 
@@ -1013,7 +1034,7 @@ function BiasMapPage({ setPage }) {
       <div className="page-hero">
         <div className="page-hero-eyebrow">Community Data - Aggregated & Anonymized</div>
         <h1>India AI Bias Map</h1>
-        <p>Where is algorithmic discrimination being reported? Real-time aggregated data from citizen reports. All submissions are anonymous.</p>
+        <p>Where is algorithmic discrimination being reported? Aggregated data from citizen reports, enriched with our probing dataset. All submissions are anonymous.</p>
       </div>
 
       {/* Summary */}

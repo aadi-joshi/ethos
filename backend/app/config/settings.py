@@ -16,7 +16,7 @@ class Settings:
 def get_settings() -> Settings:
     return Settings(
         gemini_api_key=os.getenv("GEMINI_API_KEY"),
-        gemini_model=os.getenv("GEMINI_MODEL", "gemini-1.5-flash"),
+        gemini_model=os.getenv("GEMINI_MODEL", "gemini-2.0-flash"),
         gcp_project_id=os.getenv("GCP_PROJECT_ID"),
         google_application_credentials=os.getenv("GOOGLE_APPLICATION_CREDENTIALS"),
         environment=os.getenv("ENVIRONMENT", "development"),

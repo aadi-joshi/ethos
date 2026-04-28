@@ -517,6 +517,7 @@ input, select, textarea { font-family: inherit; }
 .upload-icon { font-size: 40px; color: var(--text-muted); }
 .upload-zone h3 { font-size: 18px; font-weight: 700; color: var(--text-primary); }
 .upload-zone p { font-size: 14px; color: var(--text-secondary); max-width: 360px; }
+.sample-link { font-size: 12px; color: var(--primary-light); text-decoration: underline; cursor: pointer; }
 
 /* ── File chip ──────────────────────────────────────────────────────────── */
 .file-chip {
