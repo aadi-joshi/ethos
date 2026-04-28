@@ -13,10 +13,10 @@ const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 // ── helpers ────────────────────────────────────────────────────────────────
 const RISK_META = {
-  CRITICAL: { color: "#B03A2E", bg: "rgba(176,58,46,0.08)",  border: "rgba(176,58,46,0.18)",  label: "Critical" },
-  HIGH:     { color: "#A0621A", bg: "rgba(160,98,26,0.08)",  border: "rgba(160,98,26,0.18)",  label: "High" },
-  MEDIUM:   { color: "#1A5480", bg: "rgba(26,84,128,0.08)",  border: "rgba(26,84,128,0.18)",  label: "Medium" },
-  LOW:      { color: "#1A6B3A", bg: "rgba(26,107,58,0.08)",  border: "rgba(26,107,58,0.20)",  label: "Low" },
+  CRITICAL: { color: "#DC2626", bg: "rgba(220,38,38,0.08)",  border: "rgba(220,38,38,0.18)",  label: "Critical" },
+  HIGH:     { color: "#D97706", bg: "rgba(217,119,6,0.08)",  border: "rgba(217,119,6,0.18)",  label: "High" },
+  MEDIUM:   { color: "#2563EB", bg: "rgba(37,99,235,0.08)",  border: "rgba(37,99,235,0.18)",  label: "Medium" },
+  LOW:      { color: "#16A34A", bg: "rgba(22,163,74,0.08)",  border: "rgba(22,163,74,0.18)",  label: "Low" },
 };
 
 function riskMeta(lvl) { return RISK_META[lvl?.toUpperCase()] || RISK_META.LOW; }
@@ -134,17 +134,18 @@ const INDIA_STATES = [
 ];
 
 const CHART_STYLE = {
-  cartesianGrid: { strokeDasharray: "3 3", stroke: "#DDD8CE" },
-  tick:          { fill: "#928E87", fontSize: 12 },
+  cartesianGrid: { strokeDasharray: "3 3", stroke: "#E2E8F0" },
+  tick:          { fill: "#94A3B8", fontSize: 12 },
   tooltip: {
     contentStyle: {
-      background: "#FDFAF5", border: "1px solid #DDD8CE",
-      borderRadius: 3, color: "#1C1A17", fontSize: 13,
+      background: "#FFFFFF", border: "1px solid #E2E8F0",
+      borderRadius: 8, color: "#0F172A", fontSize: 13,
+      boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
     },
-    itemStyle: { color: "#1C1A17" },
-    cursor: { fill: "rgba(28,26,23,0.03)" },
+    itemStyle: { color: "#0F172A" },
+    cursor: { fill: "rgba(30,64,175,0.04)" },
   },
-  legend: { wrapperStyle: { color: "#928E87", fontSize: 12 } },
+  legend: { wrapperStyle: { color: "#94A3B8", fontSize: 12 } },
 };
 
 // ── Brand mark SVG ──────────────────────────────────────────────────────────
@@ -235,8 +236,7 @@ function HomePage({ setPage }) {
   ];
   const features = [
     {
-      num: "01",
-      icon: <Crosshair size={20} />,
+      icon: <Crosshair size={22} />,
       title: "LLM Counterfactual Probing",
       desc: "Sends identical prompts changing only demographic signals. Any output difference is measurable bias. Based on Bertrand & Mullainathan (2004) audit methodology.",
       badge: "Primary Differentiator",
@@ -244,8 +244,7 @@ function HomePage({ setPage }) {
       action: () => setPage("probe"),
     },
     {
-      num: "02",
-      icon: <BarChart2 size={20} />,
+      icon: <BarChart2 size={22} />,
       title: "ML Model Fairness Audit",
       desc: "Upload any CSV dataset. Get 6 fairness metrics: DPD, DIR, FPR diff, Equal Opportunity, Average Odds, Theil Index. Download reweighed datasets.",
       badge: "6 Metrics",
@@ -253,8 +252,7 @@ function HomePage({ setPage }) {
       action: () => setPage("audit"),
     },
     {
-      num: "03",
-      icon: <Globe size={20} />,
+      icon: <Globe size={22} />,
       title: "Citizen Bias Map",
       desc: "Submit anonymous bias reports. View an India heatmap showing where algorithmic discrimination is most reported. Data drives policy.",
       badge: "Community",
@@ -308,6 +306,7 @@ function HomePage({ setPage }) {
       {/* Problem */}
       <section className="section">
         <div className="section-header">
+          <div className="section-eyebrow">Why Ethos AI</div>
           <h2>The Problem</h2>
           <p>Existing fairness tools were built for Western demographics. India's bias dimensions are unique.</p>
         </div>
@@ -335,35 +334,32 @@ function HomePage({ setPage }) {
         </div>
       </section>
 
-      {/* Feature list */}
+      {/* Feature cards */}
       <section className="section">
         <div className="section-header">
+          <div className="section-eyebrow">Platform</div>
           <h2>Three-Pillar Architecture</h2>
+          <p>Every tool is purpose-built for India's unique demographic context.</p>
         </div>
-        <div className="feature-list">
+        <div className="feature-grid">
           {features.map(f => (
-            <div key={f.title} className="feature-item" onClick={f.action}>
-              <div className="feature-item-left">
-                <div className="feature-num">{f.num}</div>
-              </div>
-              <div className="feature-item-body">
-                <div className="feature-item-header">
-                  <h3 className="feature-item-title">{f.title}</h3>
-                  <span className={`badge badge-${f.badgeType}`}>{f.badge}</span>
-                </div>
-                <p>{f.desc}</p>
-                <button className="btn-ghost">
-                  Explore <ChevronRight size={14} />
-                </button>
-              </div>
+            <div key={f.title} className="feature-card" onClick={f.action}>
+              <div className="feature-icon-wrap">{f.icon}</div>
+              <span className={`badge badge-${f.badgeType}`} style={{ marginBottom: 8 }}>{f.badge}</span>
+              <h3>{f.title}</h3>
+              <p>{f.desc}</p>
+              <button className="btn-ghost">
+                Explore <ChevronRight size={14} />
+              </button>
             </div>
           ))}
         </div>
       </section>
 
       {/* Compliance */}
-      <section className="section compliance-section">
+      <section className="section alt-section">
         <div className="section-header">
+          <div className="section-eyebrow">Legal Framework</div>
           <h2>India Compliance Framework</h2>
           <p>Every report maps findings to Indian law.</p>
         </div>
@@ -594,7 +590,7 @@ function ProbePage() {
               <div className="comparison-panel">
                 <div className="group-card">
                   <div className="group-label">{result.group_a_label}</div>
-                  <div className="group-rate" style={{ color: "#1A6B3A" }}>
+                  <div className="group-rate" style={{ color: "#16A34A" }}>
                     {(result.group_a_acceptance_rate * 100).toFixed(1)}%
                   </div>
                   <div className="group-caption">Acceptance Rate</div>
@@ -672,7 +668,7 @@ function ProbePage() {
                           <XAxis dataKey="group" tick={CHART_STYLE.tick} axisLine={false} tickLine={false} />
                           <YAxis domain={[0, 100]} tickFormatter={v => `${v}%`} tick={CHART_STYLE.tick} axisLine={false} tickLine={false} />
                           <Tooltip {...CHART_STYLE.tooltip} formatter={v => [`${v}%`, "Acceptance Rate"]} />
-                          <Bar dataKey="rate" fill={BIAS_COLORS[result.dimension] || "#1B3A60"} radius={[6, 6, 0, 0]} />
+                          <Bar dataKey="rate" fill={BIAS_COLORS[result.dimension] || "#1E40AF"} radius={[6, 6, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -955,7 +951,7 @@ function AuditPage() {
                           <XAxis dataKey="metric" tick={{ ...CHART_STYLE.tick, fontSize: 10 }} axisLine={false} tickLine={false} />
                           <YAxis tick={CHART_STYLE.tick} axisLine={false} tickLine={false} />
                           <Tooltip {...CHART_STYLE.tooltip} />
-                          <Bar dataKey="value" fill="#1B3A60" radius={[5, 5, 0, 0]} />
+                          <Bar dataKey="value" fill="#1E40AF" radius={[5, 5, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -973,9 +969,9 @@ function AuditPage() {
                           <YAxis tickFormatter={v => `${v}%`} tick={CHART_STYLE.tick} axisLine={false} tickLine={false} />
                           <Tooltip {...CHART_STYLE.tooltip} formatter={v => `${v}%`} />
                           <Legend {...CHART_STYLE.legend} />
-                          <Bar dataKey="Selection Rate" fill="#1B3A60" radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="FPR"            fill="#A0621A" radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="TPR"            fill="#1A5480" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="Selection Rate" fill="#1E40AF" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="FPR"            fill="#D97706" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="TPR"            fill="#16A34A" radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -1090,18 +1086,18 @@ function BiasMapPage({ setPage }) {
             ))}
           </div>
           <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} className="india-map" preserveAspectRatio="xMidYMid meet">
-            <rect width={MAP_W} height={MAP_H} fill="#F2EDE3" rx="6" />
-            <text x={MAP_W / 2} y={MAP_H / 2} textAnchor="middle" fill="rgba(28,26,23,0.04)"
-              fontSize="80" fontWeight="700" fontFamily="'DM Serif Display', Georgia, serif">
+            <rect width={MAP_W} height={MAP_H} fill="#F8FAFC" rx="8" />
+            <text x={MAP_W / 2} y={MAP_H / 2} textAnchor="middle" fill="rgba(15,23,42,0.04)"
+              fontSize="80" fontWeight="800" fontFamily="'Inter', sans-serif">
               India
             </text>
             {mapLoading && (
-              <text x={MAP_W / 2} y={MAP_H / 2 + 40} textAnchor="middle" fill="rgba(28,26,23,0.35)" fontSize="14">
+              <text x={MAP_W / 2} y={MAP_H / 2 + 40} textAnchor="middle" fill="#94A3B8" fontSize="14">
                 Loading reports...
               </text>
             )}
             {!mapLoading && mapData.length === 0 && (
-              <text x={MAP_W / 2} y={MAP_H / 2 + 40} textAnchor="middle" fill="rgba(28,26,23,0.35)" fontSize="13">
+              <text x={MAP_W / 2} y={MAP_H / 2 + 40} textAnchor="middle" fill="#94A3B8" fontSize="13">
                 No reports yet — submit the first one
               </text>
             )}
@@ -1114,10 +1110,10 @@ function BiasMapPage({ setPage }) {
                 <g key={d.city} onClick={() => setSelected(selected?.city === d.city ? null : d)} style={{ cursor: "pointer" }}>
                   <circle cx={cx} cy={cy} r={r + 6} fill={col} opacity={0.12} />
                   <circle cx={cx} cy={cy} r={r}     fill={col} opacity={0.85}
-                    stroke={selected?.city === d.city ? "#1C1A17" : col}
+                    stroke={selected?.city === d.city ? "#0F172A" : col}
                     strokeWidth={selected?.city === d.city ? 2 : 0} />
                   <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle"
-                    fill="#FDFAF5" fontSize={r > 14 ? 9 : 7} fontWeight="700" pointerEvents="none">
+                    fill="#FFFFFF" fontSize={r > 14 ? 9 : 7} fontWeight="700" pointerEvents="none">
                     {cnt}
                   </text>
                 </g>
