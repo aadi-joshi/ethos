@@ -3,26 +3,31 @@ import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis,
 } from "recharts";
+import {
+  Crosshair, BarChart2, Globe, ShieldCheck, ChevronRight,
+  CheckCircle2, Upload, Download, FileText, Activity,
+  X, AlertTriangle, Loader2,
+} from "lucide-react";
 
 const API = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 // ── helpers ────────────────────────────────────────────────────────────────
 const RISK_META = {
-  CRITICAL: { color: "#dc2626", bg: "#fef2f2", label: "Critical" },
-  HIGH:     { color: "#d97706", bg: "#fffbeb", label: "High" },
-  MEDIUM:   { color: "#2563eb", bg: "#eff6ff", label: "Medium" },
-  LOW:      { color: "#16a34a", bg: "#f0fdf4", label: "Low" },
+  CRITICAL: { color: "#B03A2E", bg: "rgba(176,58,46,0.08)",  border: "rgba(176,58,46,0.18)",  label: "Critical" },
+  HIGH:     { color: "#A0621A", bg: "rgba(160,98,26,0.08)",  border: "rgba(160,98,26,0.18)",  label: "High" },
+  MEDIUM:   { color: "#1A5480", bg: "rgba(26,84,128,0.08)",  border: "rgba(26,84,128,0.18)",  label: "Medium" },
+  LOW:      { color: "#1A6B3A", bg: "rgba(26,107,58,0.08)",  border: "rgba(26,107,58,0.20)",  label: "Low" },
 };
 
 function riskMeta(lvl) { return RISK_META[lvl?.toUpperCase()] || RISK_META.LOW; }
 
 const METRIC_LABELS = {
   demographic_parity_difference: "Demographic Parity Diff",
-  disparate_impact_ratio: "Disparate Impact Ratio",
-  false_positive_rate_difference: "FPR Difference",
-  equal_opportunity_difference: "Equal Opportunity Diff",
-  average_odds_difference: "Average Odds Diff",
-  theil_index: "Theil Index",
+  disparate_impact_ratio:        "Disparate Impact Ratio",
+  false_positive_rate_difference:"FPR Difference",
+  equal_opportunity_difference:  "Equal Opportunity Diff",
+  average_odds_difference:       "Average Odds Diff",
+  theil_index:                   "Theil Index",
 };
 
 function metricSeverity(key, val) {
@@ -68,56 +73,58 @@ function cityToSVG(lat, lon) {
 }
 
 const INDIA_CITIES = [
-  { name: "Delhi",     lat: 28.6,  lon: 77.2  },
-  { name: "Mumbai",    lat: 19.07, lon: 72.87 },
-  { name: "Bengaluru", lat: 12.97, lon: 77.59 },
-  { name: "Hyderabad", lat: 17.38, lon: 78.46 },
-  { name: "Chennai",   lat: 13.08, lon: 80.27 },
-  { name: "Kolkata",   lat: 22.57, lon: 88.36 },
-  { name: "Pune",      lat: 18.52, lon: 73.86 },
-  { name: "Ahmedabad", lat: 23.03, lon: 72.59 },
-  { name: "Jaipur",    lat: 26.91, lon: 75.79 },
-  { name: "Lucknow",   lat: 26.85, lon: 80.95 },
-  { name: "Bhopal",    lat: 23.26, lon: 77.41 },
-  { name: "Patna",     lat: 25.59, lon: 85.14 },
-  { name: "Guwahati",  lat: 26.18, lon: 91.74 },
-  { name: "Bhubaneswar", lat: 20.3, lon: 85.84 },
-  { name: "Chandigarh", lat: 30.74, lon: 76.79 },
-  { name: "Kochi",     lat: 9.93,  lon: 76.26 },
-  { name: "Nagpur",    lat: 21.15, lon: 79.09 },
-  { name: "Varanasi",  lat: 25.32, lon: 83.01 },
-  { name: "Srinagar",  lat: 34.08, lon: 74.8  },
-  { name: "Imphal",    lat: 24.82, lon: 93.94 },
-  { name: "Ranchi",    lat: 23.35, lon: 85.33 },
-  { name: "Indore",    lat: 22.72, lon: 75.86 },
+  { name: "Delhi",       lat: 28.6,  lon: 77.2  },
+  { name: "Mumbai",      lat: 19.07, lon: 72.87 },
+  { name: "Bengaluru",   lat: 12.97, lon: 77.59 },
+  { name: "Hyderabad",   lat: 17.38, lon: 78.46 },
+  { name: "Chennai",     lat: 13.08, lon: 80.27 },
+  { name: "Kolkata",     lat: 22.57, lon: 88.36 },
+  { name: "Pune",        lat: 18.52, lon: 73.86 },
+  { name: "Ahmedabad",   lat: 23.03, lon: 72.59 },
+  { name: "Jaipur",      lat: 26.91, lon: 75.79 },
+  { name: "Lucknow",     lat: 26.85, lon: 80.95 },
+  { name: "Bhopal",      lat: 23.26, lon: 77.41 },
+  { name: "Patna",       lat: 25.59, lon: 85.14 },
+  { name: "Guwahati",    lat: 26.18, lon: 91.74 },
+  { name: "Bhubaneswar", lat: 20.3,  lon: 85.84 },
+  { name: "Chandigarh",  lat: 30.74, lon: 76.79 },
+  { name: "Kochi",       lat: 9.93,  lon: 76.26 },
+  { name: "Nagpur",      lat: 21.15, lon: 79.09 },
+  { name: "Varanasi",    lat: 25.32, lon: 83.01 },
+  { name: "Srinagar",    lat: 34.08, lon: 74.8  },
+  { name: "Imphal",      lat: 24.82, lon: 93.94 },
+  { name: "Ranchi",      lat: 23.35, lon: 85.33 },
+  { name: "Indore",      lat: 22.72, lon: 75.86 },
 ];
 
 const BIAS_COLORS = {
-  caste: "#e63946", religion: "#7c3aed",
-  gender: "#0891b2", region: "#f59e0b",
+  caste:    "#F87171",
+  religion: "#A78BFA",
+  gender:   "#38BDF8",
+  region:   "#FBB040",
 };
 
 const SEED_COMPLAINTS = [
-  { city: "Delhi",     count: 142, dominant: "caste",    domain: "hiring" },
-  { city: "Mumbai",    count: 118, dominant: "gender",   domain: "lending" },
-  { city: "Bengaluru", count: 97,  dominant: "caste",    domain: "hiring" },
-  { city: "Hyderabad", count: 71,  dominant: "religion", domain: "hiring" },
-  { city: "Chennai",   count: 63,  dominant: "caste",    domain: "education" },
-  { city: "Kolkata",   count: 55,  dominant: "religion", domain: "hiring" },
-  { city: "Pune",      count: 48,  dominant: "gender",   domain: "hiring" },
-  { city: "Ahmedabad", count: 41,  dominant: "religion", domain: "lending" },
-  { city: "Jaipur",    count: 39,  dominant: "caste",    domain: "healthcare" },
-  { city: "Lucknow",   count: 37,  dominant: "caste",    domain: "hiring" },
-  { city: "Patna",     count: 29,  dominant: "caste",    domain: "education" },
-  { city: "Guwahati",  count: 24,  dominant: "region",   domain: "hiring" },
-  { city: "Bhubaneswar", count: 18, dominant: "caste",   domain: "lending" },
-  { city: "Kochi",     count: 22,  dominant: "gender",   domain: "healthcare" },
-  { city: "Nagpur",    count: 17,  dominant: "caste",    domain: "hiring" },
-  { city: "Varanasi",  count: 21,  dominant: "caste",    domain: "education" },
-  { city: "Imphal",    count: 14,  dominant: "region",   domain: "hiring" },
-  { city: "Chandigarh", count: 26, dominant: "gender",   domain: "hiring" },
-  { city: "Ranchi",    count: 16,  dominant: "caste",    domain: "education" },
-  { city: "Indore",    count: 19,  dominant: "caste",    domain: "hiring" },
+  { city: "Delhi",       count: 142, dominant: "caste",    domain: "hiring"     },
+  { city: "Mumbai",      count: 118, dominant: "gender",   domain: "lending"    },
+  { city: "Bengaluru",   count: 97,  dominant: "caste",    domain: "hiring"     },
+  { city: "Hyderabad",   count: 71,  dominant: "religion", domain: "hiring"     },
+  { city: "Chennai",     count: 63,  dominant: "caste",    domain: "education"  },
+  { city: "Kolkata",     count: 55,  dominant: "religion", domain: "hiring"     },
+  { city: "Pune",        count: 48,  dominant: "gender",   domain: "hiring"     },
+  { city: "Ahmedabad",   count: 41,  dominant: "religion", domain: "lending"    },
+  { city: "Jaipur",      count: 39,  dominant: "caste",    domain: "healthcare" },
+  { city: "Lucknow",     count: 37,  dominant: "caste",    domain: "hiring"     },
+  { city: "Patna",       count: 29,  dominant: "caste",    domain: "education"  },
+  { city: "Guwahati",    count: 24,  dominant: "region",   domain: "hiring"     },
+  { city: "Bhubaneswar", count: 18,  dominant: "caste",    domain: "lending"    },
+  { city: "Kochi",       count: 22,  dominant: "gender",   domain: "healthcare" },
+  { city: "Nagpur",      count: 17,  dominant: "caste",    domain: "hiring"     },
+  { city: "Varanasi",    count: 21,  dominant: "caste",    domain: "education"  },
+  { city: "Imphal",      count: 14,  dominant: "region",   domain: "hiring"     },
+  { city: "Chandigarh",  count: 26,  dominant: "gender",   domain: "hiring"     },
+  { city: "Ranchi",      count: 16,  dominant: "caste",    domain: "education"  },
+  { city: "Indore",      count: 19,  dominant: "caste",    domain: "hiring"     },
 ];
 
 const DIMENSIONS = [
@@ -128,10 +135,10 @@ const DIMENSIONS = [
 ];
 
 const DOMAINS = [
-  { key: "hiring",     label: "HR / Hiring" },
+  { key: "hiring",     label: "HR / Hiring"  },
   { key: "lending",    label: "Bank Lending" },
-  { key: "education",  label: "Admissions" },
-  { key: "healthcare", label: "Healthcare" },
+  { key: "education",  label: "Admissions"   },
+  { key: "healthcare", label: "Healthcare"   },
 ];
 
 const DEFAULT_TEMPLATE = `You are an AI hiring assistant screening candidates for a software engineering role.
@@ -147,21 +154,46 @@ const INDIA_STATES = [
   "Uttar Pradesh","Uttarakhand","West Bengal","Other",
 ];
 
+const CHART_STYLE = {
+  cartesianGrid: { strokeDasharray: "3 3", stroke: "#DDD8CE" },
+  tick:          { fill: "#928E87", fontSize: 12 },
+  tooltip: {
+    contentStyle: {
+      background: "#FDFAF5", border: "1px solid #DDD8CE",
+      borderRadius: 3, color: "#1C1A17", fontSize: 13,
+    },
+    itemStyle: { color: "#1C1A17" },
+    cursor: { fill: "rgba(28,26,23,0.03)" },
+  },
+  legend: { wrapperStyle: { color: "#928E87", fontSize: 12 } },
+};
+
+// ── Brand mark SVG ──────────────────────────────────────────────────────────
+function BrandMark({ size = 24 }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true" className="brand-mark">
+      <circle cx="12" cy="12" r="9"  stroke="currentColor" strokeWidth="1.4"/>
+      <circle cx="12" cy="12" r="3"  fill="currentColor"/>
+      <path d="M12 2v3M12 19v3M2 12h3M19 12h3" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+    </svg>
+  );
+}
+
 // ── Navbar ──────────────────────────────────────────────────────────────────
 function Navbar({ page, setPage }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const links = [
-    { id: "home",    label: "Home" },
-    { id: "probe",   label: "LLM Probe" },
-    { id: "audit",   label: "ML Audit" },
-    { id: "map",     label: "Bias Map" },
+    { id: "home",    label: "Home"        },
+    { id: "probe",   label: "LLM Probe"   },
+    { id: "audit",   label: "ML Audit"    },
+    { id: "map",     label: "Bias Map"    },
     { id: "citizen", label: "Report Bias" },
   ];
   return (
     <nav className="navbar">
       <div className="navbar-inner">
         <button className="navbar-brand" onClick={() => setPage("home")}>
-          <span className="brand-icon">⊗</span>
+          <BrandMark size={22} />
           <span className="brand-name">Ethos AI</span>
           <span className="brand-tag">BETA</span>
         </button>
@@ -180,7 +212,7 @@ function Navbar({ page, setPage }) {
           Start Audit
         </button>
         <button className="menu-toggle" onClick={() => setMenuOpen(o => !o)}>
-          {menuOpen ? "✕" : "☰"}
+          {menuOpen ? <X size={20} /> : "☰"}
         </button>
       </div>
     </nav>
@@ -193,10 +225,12 @@ function Footer({ setPage }) {
     <footer className="footer">
       <div className="footer-inner">
         <div className="footer-brand">
-          <span className="brand-icon">⊗</span>
-          <strong>Ethos AI</strong>
+          <div className="footer-brand-row">
+            <BrandMark size={20} />
+            <strong>Ethos AI</strong>
+          </div>
           <p>India's first accessible AI bias auditing platform.<br />
-          Google Solution Challenge 2026.</p>
+          Built for Google Solution Challenge 2026.</p>
         </div>
         <div className="footer-col">
           <strong>Platform</strong>
@@ -204,21 +238,9 @@ function Footer({ setPage }) {
           <button onClick={() => setPage("audit")}>ML Model Audit</button>
           <button onClick={() => setPage("map")}>Bias Map</button>
         </div>
-        <div className="footer-col">
-          <strong>Research</strong>
-          <a href="#" onClick={e => e.preventDefault()}>Bertrand & Mullainathan (2004)</a>
-          <a href="#" onClick={e => e.preventDefault()}>Kamiran & Calders (2012)</a>
-          <a href="#" onClick={e => e.preventDefault()}>DPDP Act 2023</a>
-        </div>
-        <div className="footer-col">
-          <strong>Compliance</strong>
-          <span>DPDP Act 2023</span>
-          <span>Articles 15 & 16</span>
-          <span>RBI Fair Practices</span>
-        </div>
       </div>
       <div className="footer-bottom">
-        <span>Built for Google Solution Challenge 2026 - Unbiased AI Decision Track</span>
+        Built for Google Solution Challenge 2026 — Unbiased AI Decision Track
       </div>
     </footer>
   );
@@ -234,7 +256,8 @@ function HomePage({ setPage }) {
   ];
   const features = [
     {
-      icon: "◎",
+      num: "01",
+      icon: <Crosshair size={20} />,
       title: "LLM Counterfactual Probing",
       desc: "Sends identical prompts changing only demographic signals. Any output difference is measurable bias. Based on Bertrand & Mullainathan (2004) audit methodology.",
       badge: "Primary Differentiator",
@@ -242,7 +265,8 @@ function HomePage({ setPage }) {
       action: () => setPage("probe"),
     },
     {
-      icon: "▦",
+      num: "02",
+      icon: <BarChart2 size={20} />,
       title: "ML Model Fairness Audit",
       desc: "Upload any CSV dataset. Get 6 fairness metrics: DPD, DIR, FPR diff, Equal Opportunity, Average Odds, Theil Index. Download reweighed datasets.",
       badge: "6 Metrics",
@@ -250,7 +274,8 @@ function HomePage({ setPage }) {
       action: () => setPage("audit"),
     },
     {
-      icon: "◉",
+      num: "03",
+      icon: <Globe size={20} />,
       title: "Citizen Bias Map",
       desc: "Submit anonymous bias reports. View an India heatmap showing where algorithmic discrimination is most reported. Data drives policy.",
       badge: "Community",
@@ -263,7 +288,9 @@ function HomePage({ setPage }) {
     <div className="page-content">
       {/* Hero */}
       <section className="hero">
-        <div className="hero-eyebrow">Google Solution Challenge 2026 - Unbiased AI Decision</div>
+        <div className="hero-eyebrow">
+          Google Solution Challenge 2026 — Unbiased AI Decision
+        </div>
         <h1 className="hero-title">
           Bias doesn't hide.<br />
           <span className="hero-accent">We expose it.</span>
@@ -273,12 +300,17 @@ function HomePage({ setPage }) {
           caste, gender, religion, and regional bias in AI systems making decisions about
           real people's lives.
         </p>
+        <div className="hero-divider" />
         <div className="hero-actions">
-          <button className="btn-primary" onClick={() => setPage("probe")}>Run LLM Probe</button>
-          <button className="btn-outline" onClick={() => setPage("audit")}>Audit ML Model</button>
+          <button className="btn-primary" onClick={() => setPage("probe")}>
+            Run LLM Probe <ChevronRight size={16} />
+          </button>
+          <button className="btn-outline" onClick={() => setPage("audit")}>
+            Audit ML Model
+          </button>
         </div>
         <div className="hero-disclaimer">
-          Demo mode available - no API key required. See real bias in seconds.
+          Demo mode available — no API key required. See real bias in seconds.
         </div>
       </section>
 
@@ -292,7 +324,7 @@ function HomePage({ setPage }) {
         ))}
       </section>
 
-      {/* What we solve */}
+      {/* Problem */}
       <section className="section">
         <div className="section-header">
           <h2>The Problem</h2>
@@ -310,28 +342,39 @@ function HomePage({ setPage }) {
               </tr>
             </thead>
             <tbody>
-              <tr><td>IBM AIF360</td><td className="no">No</td><td className="no">No</td><td className="no">No</td><td className="no">No</td></tr>
-              <tr><td>Microsoft Fairlearn</td><td className="no">No</td><td className="no">No</td><td className="no">No</td><td className="no">No</td></tr>
-              <tr><td>Google What-If Tool</td><td className="no">No</td><td className="no">No</td><td className="no">No</td><td className="yes">Yes</td></tr>
-              <tr className="highlight-row"><td><strong>Ethos AI</strong></td><td className="yes">Yes</td><td className="yes">Yes</td><td className="yes">Yes</td><td className="yes">Yes</td></tr>
+              <tr><td>IBM AIF360</td>          <td className="no">No</td><td className="no">No</td><td className="no">No</td><td className="no">No</td></tr>
+              <tr><td>Microsoft Fairlearn</td> <td className="no">No</td><td className="no">No</td><td className="no">No</td><td className="no">No</td></tr>
+              <tr><td>Google What-If Tool</td> <td className="no">No</td><td className="no">No</td><td className="no">No</td><td className="yes">Yes</td></tr>
+              <tr className="highlight-row">
+                <td><strong>Ethos AI</strong></td>
+                <td className="yes">Yes</td><td className="yes">Yes</td><td className="yes">Yes</td><td className="yes">Yes</td>
+              </tr>
             </tbody>
           </table>
         </div>
       </section>
 
-      {/* Feature cards */}
+      {/* Feature list */}
       <section className="section">
         <div className="section-header">
           <h2>Three-Pillar Architecture</h2>
         </div>
-        <div className="feature-grid">
+        <div className="feature-list">
           {features.map(f => (
-            <div key={f.title} className="feature-card" onClick={f.action}>
-              <div className="feature-icon">{f.icon}</div>
-              <span className={`badge badge-${f.badgeType}`}>{f.badge}</span>
-              <h3>{f.title}</h3>
-              <p>{f.desc}</p>
-              <button className="btn-ghost">Explore ›</button>
+            <div key={f.title} className="feature-item" onClick={f.action}>
+              <div className="feature-item-left">
+                <div className="feature-num">{f.num}</div>
+              </div>
+              <div className="feature-item-body">
+                <div className="feature-item-header">
+                  <h3 className="feature-item-title">{f.title}</h3>
+                  <span className={`badge badge-${f.badgeType}`}>{f.badge}</span>
+                </div>
+                <p>{f.desc}</p>
+                <button className="btn-ghost">
+                  Explore <ChevronRight size={14} />
+                </button>
+              </div>
             </div>
           ))}
         </div>
@@ -345,10 +388,10 @@ function HomePage({ setPage }) {
         </div>
         <div className="compliance-grid">
           {[
-            { law: "DPDP Act 2023", desc: "India's data protection law - bias in automated decisions is a data rights violation" },
-            { law: "Art. 15 & 16", desc: "Constitutional prohibition on discrimination by caste, religion, sex, region" },
+            { law: "DPDP Act 2023",    desc: "India's data protection law — bias in automated decisions is a data rights violation" },
+            { law: "Art. 15 & 16",     desc: "Constitutional prohibition on discrimination by caste, religion, sex, region" },
             { law: "RBI Fair Practices", desc: "Reserve Bank mandate for non-discriminatory lending algorithms" },
-            { law: "EEOC 4/5 Rule", desc: "Selection rate below 80% of highest group triggers disparate impact scrutiny" },
+            { law: "EEOC 4/5 Rule",    desc: "Selection rate below 80% of highest group triggers disparate impact scrutiny" },
           ].map(c => (
             <div key={c.law} className="compliance-card">
               <div className="compliance-law">{c.law}</div>
@@ -363,25 +406,22 @@ function HomePage({ setPage }) {
 
 // ── ProbePage ───────────────────────────────────────────────────────────────
 function ProbePage() {
-  const [dimension, setDimension] = useState("caste");
-  const [domain, setDomain] = useState("hiring");
-  const [mode, setMode] = useState("demo");
-  const [template, setTemplate] = useState(DEFAULT_TEMPLATE);
-  const [targetUrl, setTargetUrl] = useState("");
-  const [nPerGroup, setNPerGroup] = useState(20);
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState("results");
+  const [dimension, setDimension]   = useState("caste");
+  const [domain,    setDomain]      = useState("hiring");
+  const [mode,      setMode]        = useState("demo");
+  const [template,  setTemplate]    = useState(DEFAULT_TEMPLATE);
+  const [targetUrl, setTargetUrl]   = useState("");
+  const [nPerGroup, setNPerGroup]   = useState(20);
+  const [loading,   setLoading]     = useState(false);
+  const [result,    setResult]      = useState(null);
+  const [error,     setError]       = useState("");
+  const [activeTab, setActiveTab]   = useState("results");
 
   const runProbe = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    setResult(null);
+    setLoading(true); setError(""); setResult(null);
     try {
       const body = {
-        dimension,
-        domain,
+        dimension, domain,
         demo_mode: mode === "demo",
         target_type: mode,
         prompt_template: template,
@@ -403,7 +443,7 @@ function ProbePage() {
   return (
     <div className="page-content">
       <div className="page-hero">
-        <div className="page-hero-eyebrow">Counterfactual Methodology - Bertrand & Mullainathan (2004)</div>
+        <div className="page-hero-eyebrow">Counterfactual Methodology — Bertrand & Mullainathan (2004)</div>
         <h1>LLM Bias Probe</h1>
         <p>Send identical prompts to any AI, changing only demographic signals. Measure discrimination by statistical difference in outputs.</p>
       </div>
@@ -421,7 +461,7 @@ function ProbePage() {
                   key={d.key}
                   className={`dim-btn${dimension === d.key ? " active" : ""}`}
                   onClick={() => setDimension(d.key)}
-                  style={dimension === d.key ? { borderColor: BIAS_COLORS[d.key], background: `${BIAS_COLORS[d.key]}15` } : {}}
+                  style={dimension === d.key ? { borderColor: BIAS_COLORS[d.key] + "55", background: BIAS_COLORS[d.key] + "10" } : {}}
                 >
                   <span className="dim-dot" style={{ background: BIAS_COLORS[d.key] }} />
                   {d.label}
@@ -448,8 +488,8 @@ function ProbePage() {
             <label>Target AI Mode</label>
             <div className="tab-row">
               {[
-                { k: "demo",   l: "Demo" },
-                { k: "gemini", l: "Gemini" },
+                { k: "demo",   l: "Demo"     },
+                { k: "gemini", l: "Gemini"   },
                 { k: "live",   l: "Live API" },
               ].map(m => (
                 <button
@@ -459,9 +499,9 @@ function ProbePage() {
                 >{m.l}</button>
               ))}
             </div>
-            {mode === "demo" && <p className="field-hint">Pre-generated responses. No API key needed.</p>}
+            {mode === "demo"   && <p className="field-hint">Pre-generated responses. No API key needed.</p>}
             {mode === "gemini" && <p className="field-hint">Uses Gemini API key from server.</p>}
-            {mode === "live" && (
+            {mode === "live"   && (
               <input
                 className="text-input"
                 placeholder="https://your-api.com/generate"
@@ -472,7 +512,7 @@ function ProbePage() {
           </div>
 
           <div className="field-group">
-            <label>Samples per Group: <strong>{nPerGroup}</strong></label>
+            <label>Samples per Group: <strong style={{ color: "var(--accent)" }}>{nPerGroup}</strong></label>
             <input
               type="range" min={5} max={50} value={nPerGroup}
               onChange={e => setNPerGroup(Number(e.target.value))}
@@ -492,16 +532,23 @@ function ProbePage() {
           </div>
 
           <button className="btn-primary full-width" onClick={runProbe} disabled={loading}>
-            {loading ? <><span className="spinner-sm" /> Running Probe...</> : "Run Bias Probe"}
+            {loading
+              ? <><Loader2 size={16} style={{ animation: "spin 0.75s linear infinite" }} /> Running Probe...</>
+              : "Run Bias Probe"}
           </button>
-          {error && <div className="alert-error">{error}</div>}
+          {error && (
+            <div className="alert-error">
+              <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
+              {error}
+            </div>
+          )}
         </aside>
 
         {/* Results */}
         <main className="results-panel">
           {!result && !loading && (
             <div className="empty-state">
-              <div className="empty-icon">◎</div>
+              <div className="empty-icon"><Crosshair size={28} /></div>
               <h3>Configure and run a probe</h3>
               <p>Select a dimension, domain, and mode. In demo mode, results appear instantly with pre-generated data showing real bias patterns.</p>
               <button className="btn-blue" onClick={runProbe}>
@@ -521,10 +568,8 @@ function ProbePage() {
           {result && (
             <>
               {/* Risk banner */}
-              <div className="risk-banner" style={{ background: rm.bg, borderColor: rm.color }}>
-                <div className="risk-level-label" style={{ color: rm.color }}>
-                  {result.risk_level}
-                </div>
+              <div className="risk-banner" style={{ color: rm.color }}>
+                <div className="risk-level-label">{result.risk_level}</div>
                 <div className="risk-banner-title">
                   {result.risk_level === "CRITICAL" || result.risk_level === "HIGH"
                     ? "Statistically significant bias detected"
@@ -534,7 +579,7 @@ function ProbePage() {
                 </div>
                 {result.statistically_significant && (
                   <div className="risk-badge-row">
-                    <span className="sig-badge">p = {result.p_value?.toFixed(4)} - Statistically Significant</span>
+                    <span className="sig-badge">p = {result.p_value?.toFixed(4)} — Statistically Significant</span>
                   </div>
                 )}
               </div>
@@ -543,7 +588,7 @@ function ProbePage() {
               <div className="comparison-panel">
                 <div className="group-card">
                   <div className="group-label">{result.group_a_label}</div>
-                  <div className="group-rate" style={{ color: "#16a34a" }}>
+                  <div className="group-rate" style={{ color: "#1A6B3A" }}>
                     {(result.group_a_acceptance_rate * 100).toFixed(1)}%
                   </div>
                   <div className="group-caption">Acceptance Rate</div>
@@ -573,10 +618,10 @@ function ProbePage() {
               {/* Tabs */}
               <div className="result-tabs">
                 {[
-                  { k: "results",     l: "Analysis" },
-                  { k: "examples",    l: "Evidence" },
+                  { k: "results",     l: "Analysis"    },
+                  { k: "examples",    l: "Evidence"    },
                   { k: "remediation", l: "Remediation" },
-                  { k: "compliance",  l: "Compliance" },
+                  { k: "compliance",  l: "Compliance"  },
                 ].map(t => (
                   <button
                     key={t.k}
@@ -610,7 +655,6 @@ function ProbePage() {
                       <div className="stat-val">{result.disparate_impact_ratio?.toFixed(3)}</div>
                     </div>
                   </div>
-                  {/* Chart */}
                   {result.group_a_acceptance_rate !== undefined && (
                     <div className="chart-box">
                       <ResponsiveContainer width="100%" height={200}>
@@ -618,11 +662,11 @@ function ProbePage() {
                           { group: result.group_a_label, rate: +(result.group_a_acceptance_rate * 100).toFixed(1) },
                           { group: result.group_b_label, rate: +(result.group_b_acceptance_rate * 100).toFixed(1) },
                         ]}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                          <XAxis dataKey="group" />
-                          <YAxis domain={[0, 100]} tickFormatter={v => `${v}%`} />
-                          <Tooltip formatter={v => [`${v}%`, "Acceptance Rate"]} />
-                          <Bar dataKey="rate" fill={BIAS_COLORS[result.dimension] || "#0f2243"} radius={[4, 4, 0, 0]} />
+                          <CartesianGrid {...CHART_STYLE.cartesianGrid} />
+                          <XAxis dataKey="group" tick={CHART_STYLE.tick} axisLine={false} tickLine={false} />
+                          <YAxis domain={[0, 100]} tickFormatter={v => `${v}%`} tick={CHART_STYLE.tick} axisLine={false} tickLine={false} />
+                          <Tooltip {...CHART_STYLE.tooltip} formatter={v => [`${v}%`, "Acceptance Rate"]} />
+                          <Bar dataKey="rate" fill={BIAS_COLORS[result.dimension] || "#1B3A60"} radius={[6, 6, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -633,22 +677,18 @@ function ProbePage() {
               {activeTab === "examples" && (
                 <div className="tab-content">
                   <h4>Differential Output Examples</h4>
-                  <p className="tab-desc">Identical prompts - only the name changed.</p>
+                  <p className="tab-desc">Identical prompts — only the name changed.</p>
                   {result.differential_examples?.map((ex, i) => (
                     <div key={i} className="example-pair">
                       <div className="example-half example-a">
                         <div className="example-name">{ex.group_a_name}</div>
-                        <div className="example-outcome yes">
-                          {ex.group_a_decision}
-                        </div>
+                        <div className="example-outcome yes">{ex.group_a_decision}</div>
                         <div className="example-text">{ex.group_a_reason}</div>
                       </div>
                       <div className="example-vs">vs</div>
                       <div className="example-half example-b">
                         <div className="example-name">{ex.group_b_name}</div>
-                        <div className="example-outcome no">
-                          {ex.group_b_decision}
-                        </div>
+                        <div className="example-outcome no">{ex.group_b_decision}</div>
                         <div className="example-text">{ex.group_b_reason}</div>
                       </div>
                     </div>
@@ -659,18 +699,14 @@ function ProbePage() {
               {activeTab === "remediation" && (
                 <div className="tab-content">
                   <h4>Remediation Plan</h4>
-                  <div className="narrative-box">
-                    <p>{result.remediation_plan}</p>
-                  </div>
+                  <div className="narrative-box"><p>{result.remediation_plan}</p></div>
                 </div>
               )}
 
               {activeTab === "compliance" && (
                 <div className="tab-content">
                   <h4>India Compliance Assessment</h4>
-                  <div className="narrative-box compliance">
-                    <p>{result.compliance_assessment}</p>
-                  </div>
+                  <div className="narrative-box compliance"><p>{result.compliance_assessment}</p></div>
                 </div>
               )}
             </>
@@ -683,43 +719,35 @@ function ProbePage() {
 
 // ── AuditPage ───────────────────────────────────────────────────────────────
 function AuditPage() {
-  const [file, setFile] = useState(null);
-  const [columns, setColumns] = useState([]);
-  const [preview, setPreview] = useState(null);
-  const [target, setTarget] = useState("");
-  const [sensitive, setSensitive] = useState("");
-  const [groundTruth, setGroundTruth] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState("");
-  const [reweighLoading, setReweighLoading] = useState(false);
-  const [explanation, setExplanation] = useState(null);
+  const [file,            setFile]            = useState(null);
+  const [columns,         setColumns]         = useState([]);
+  const [preview,         setPreview]         = useState(null);
+  const [target,          setTarget]          = useState("");
+  const [sensitive,       setSensitive]       = useState("");
+  const [groundTruth,     setGroundTruth]     = useState("");
+  const [loading,         setLoading]         = useState(false);
+  const [result,          setResult]          = useState(null);
+  const [error,           setError]           = useState("");
+  const [reweighLoading,  setReweighLoading]  = useState(false);
+  const [explanation,     setExplanation]     = useState(null);
   const [recommendations, setRecommendations] = useState(null);
-  const [activeTab, setActiveTab] = useState("overview");
+  const [activeTab,       setActiveTab]       = useState("overview");
 
   const onDrop = useCallback(async (f) => {
-    setFile(f);
-    setResult(null);
-    setError("");
-    setExplanation(null);
-    setRecommendations(null);
-    const fd = new FormData();
-    fd.append("file", f);
+    setFile(f); setResult(null); setError(""); setExplanation(null); setRecommendations(null);
+    const fd = new FormData(); fd.append("file", f);
     try {
       const data = await apiPostForm("/upload", fd);
       setColumns(data.columns || []);
       setPreview(data);
       setTarget(data.columns?.[0] || "");
       setSensitive(data.columns?.[1] || "");
-    } catch (e) {
-      setError(e.message);
-    }
+    } catch (e) { setError(e.message); }
   }, []);
 
   const onAnalyze = useCallback(async () => {
     if (!file || !target || !sensitive) return;
-    setLoading(true);
-    setError("");
+    setLoading(true); setError("");
     try {
       const fd = new FormData();
       fd.append("file", file);
@@ -728,21 +756,13 @@ function AuditPage() {
       if (groundTruth) fd.append("ground_truth_column", groundTruth);
       const data = await apiPostForm("/analyze", fd);
       setResult(data);
-      // Explanation
       const expl = await apiPost("/explain", { fairness_metrics: data });
       setExplanation(expl);
-      // Recommendations
-      const rec = await apiPost("/recommend", {
-        overall_bias: data.overall_bias,
-        flagged_issues: data.flagged_issues,
-      });
+      const rec  = await apiPost("/recommend", { overall_bias: data.overall_bias, flagged_issues: data.flagged_issues });
       setRecommendations(rec);
       setActiveTab("overview");
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { setError(e.message); }
+    finally { setLoading(false); }
   }, [file, target, sensitive, groundTruth]);
 
   const downloadReweighed = useCallback(async () => {
@@ -760,28 +780,25 @@ function AuditPage() {
       const a = document.createElement("a");
       a.href = url; a.download = "reweighed_dataset.csv"; a.click();
       URL.revokeObjectURL(url);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setReweighLoading(false);
-    }
+    } catch (e) { setError(e.message); }
+    finally { setReweighLoading(false); }
   }, [file, target, sensitive]);
 
   const chartData = useMemo(() => {
     if (!result) return [];
     return Object.entries(result.group_metrics).map(([g, m]) => ({
-      group: g,
+      group:           g,
       "Selection Rate": +(Number(m.selection_rate) * 100).toFixed(1),
-      "FPR": +(Number(m.false_positive_rate || 0) * 100).toFixed(1),
-      "TPR": +(Number(m.true_positive_rate || 0) * 100).toFixed(1),
+      "FPR":           +(Number(m.false_positive_rate || 0) * 100).toFixed(1),
+      "TPR":           +(Number(m.true_positive_rate  || 0) * 100).toFixed(1),
     }));
   }, [result]);
 
   const metricsData = useMemo(() => {
     if (!result) return [];
     return Object.entries(result.overall_bias).map(([k, v]) => ({
-      metric: METRIC_LABELS[k] || k,
-      value: +Number(v).toFixed(4),
+      metric:   METRIC_LABELS[k] || k,
+      value:    +Number(v).toFixed(4),
       severity: metricSeverity(k, v),
     }));
   }, [result]);
@@ -789,12 +806,11 @@ function AuditPage() {
   return (
     <div className="page-content">
       <div className="page-hero">
-        <div className="page-hero-eyebrow">Kamiran & Calders (2012) - Statistical Fairness</div>
+        <div className="page-hero-eyebrow">Kamiran & Calders (2012) — Statistical Fairness</div>
         <h1>ML Model Audit</h1>
         <p>Upload any CSV dataset. Get 6 fairness metrics, AI explanation, mitigation recommendations, and a reweighed dataset download.</p>
       </div>
 
-      {/* Upload zone */}
       {!file && (
         <div
           className="upload-zone"
@@ -802,7 +818,7 @@ function AuditPage() {
           onDrop={e => { e.preventDefault(); const f = e.dataTransfer.files[0]; if (f) onDrop(f); }}
           onClick={() => document.getElementById("csv-input").click()}
         >
-          <div className="upload-icon">▦</div>
+          <Upload size={40} className="upload-icon" />
           <h3>Drop your CSV dataset here</h3>
           <p>Or click to browse. Requires a binary target column and at least one sensitive attribute column.</p>
           <button className="btn-blue">Browse File</button>
@@ -813,15 +829,16 @@ function AuditPage() {
 
       {file && (
         <div className="audit-layout">
-          {/* Config */}
           <aside className="config-panel">
             <div className="file-chip">
-              <span className="file-icon">▦</span>
+              <FileText size={18} className="file-icon" />
               <div>
                 <div className="file-name">{file.name}</div>
                 <div className="file-meta">{preview?.basic_stats?.row_count || "?"} rows</div>
               </div>
-              <button className="file-remove" onClick={() => { setFile(null); setColumns([]); setPreview(null); setResult(null); }}>✕</button>
+              <button className="file-remove" onClick={() => { setFile(null); setColumns([]); setPreview(null); setResult(null); }}>
+                <X size={14} />
+              </button>
             </div>
 
             <div className="field-group">
@@ -845,23 +862,29 @@ function AuditPage() {
             </div>
 
             <button className="btn-primary full-width" onClick={onAnalyze} disabled={loading || !target || !sensitive}>
-              {loading ? <><span className="spinner-sm" /> Analyzing...</> : "Analyze Bias"}
+              {loading
+                ? <><Loader2 size={15} style={{ animation: "spin 0.75s linear infinite" }} /> Analyzing...</>
+                : "Analyze Bias"}
             </button>
 
             {result && (
               <button className="btn-outline full-width" onClick={downloadReweighed} disabled={reweighLoading}>
+                <Download size={15} />
                 {reweighLoading ? "Downloading..." : "Download Reweighed CSV"}
               </button>
             )}
-
-            {error && <div className="alert-error">{error}</div>}
+            {error && (
+              <div className="alert-error">
+                <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
+                {error}
+              </div>
+            )}
           </aside>
 
-          {/* Results */}
           <main className="results-panel">
             {!result && !loading && (
               <div className="empty-state">
-                <div className="empty-icon">▦</div>
+                <div className="empty-icon"><Activity size={28} /></div>
                 <h3>File loaded. Configure and analyze.</h3>
                 <p>Select target and sensitive columns, then click Analyze Bias.</p>
               </div>
@@ -875,7 +898,6 @@ function AuditPage() {
 
             {result && (
               <>
-                {/* Metric cards */}
                 <div className="metric-grid">
                   {metricsData.map(m => {
                     const rm2 = riskMeta(m.severity);
@@ -883,7 +905,9 @@ function AuditPage() {
                       <div key={m.metric} className="metric-card" style={{ borderTopColor: rm2.color }}>
                         <div className="metric-name">{m.metric}</div>
                         <div className="metric-value">{m.value}</div>
-                        <span className="badge" style={{ background: rm2.bg, color: rm2.color }}>{rm2.label}</span>
+                        <span className="badge" style={{ background: rm2.bg, color: rm2.color, border: `1px solid ${rm2.border}` }}>
+                          {rm2.label}
+                        </span>
                       </div>
                     );
                   })}
@@ -891,9 +915,9 @@ function AuditPage() {
 
                 <div className="result-tabs">
                   {[
-                    { k: "overview",    l: "Overview" },
-                    { k: "groups",      l: "Groups" },
-                    { k: "explanation", l: "AI Explanation" },
+                    { k: "overview",    l: "Overview"        },
+                    { k: "groups",      l: "Groups"          },
+                    { k: "explanation", l: "AI Explanation"  },
                     { k: "recommend",   l: "Recommendations" },
                   ].map(t => (
                     <button key={t.k} className={`result-tab${activeTab === t.k ? " active" : ""}`} onClick={() => setActiveTab(t.k)}>
@@ -906,18 +930,18 @@ function AuditPage() {
                   <div className="tab-content">
                     <h4>Flagged Issues</h4>
                     {result.flagged_issues?.length === 0
-                      ? <p className="ok-text">No fairness issues detected at current thresholds.</p>
+                      ? <p className="ok-text"><CheckCircle2 size={16} /> No fairness issues detected at current thresholds.</p>
                       : <ul className="issue-list">{result.flagged_issues?.map(i => <li key={i}>{i}</li>)}</ul>
                     }
                     <div className="chart-box">
                       <h4>Fairness Metrics</h4>
                       <ResponsiveContainer width="100%" height={220}>
                         <BarChart data={metricsData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                          <XAxis dataKey="metric" tick={{ fontSize: 10 }} />
-                          <YAxis />
-                          <Tooltip />
-                          <Bar dataKey="value" fill="#0f2243" radius={[4, 4, 0, 0]} />
+                          <CartesianGrid {...CHART_STYLE.cartesianGrid} />
+                          <XAxis dataKey="metric" tick={{ ...CHART_STYLE.tick, fontSize: 10 }} axisLine={false} tickLine={false} />
+                          <YAxis tick={CHART_STYLE.tick} axisLine={false} tickLine={false} />
+                          <Tooltip {...CHART_STYLE.tooltip} />
+                          <Bar dataKey="value" fill="#1B3A60" radius={[5, 5, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
@@ -930,27 +954,29 @@ function AuditPage() {
                       <h4>Group Comparison</h4>
                       <ResponsiveContainer width="100%" height={260}>
                         <BarChart data={chartData}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
-                          <XAxis dataKey="group" />
-                          <YAxis tickFormatter={v => `${v}%`} />
-                          <Tooltip formatter={v => `${v}%`} />
-                          <Legend />
-                          <Bar dataKey="Selection Rate" fill="#0f2243" radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="FPR" fill="#e63946" radius={[4, 4, 0, 0]} />
-                          <Bar dataKey="TPR" fill="#16a34a" radius={[4, 4, 0, 0]} />
+                          <CartesianGrid {...CHART_STYLE.cartesianGrid} />
+                          <XAxis dataKey="group" tick={CHART_STYLE.tick} axisLine={false} tickLine={false} />
+                          <YAxis tickFormatter={v => `${v}%`} tick={CHART_STYLE.tick} axisLine={false} tickLine={false} />
+                          <Tooltip {...CHART_STYLE.tooltip} formatter={v => `${v}%`} />
+                          <Legend {...CHART_STYLE.legend} />
+                          <Bar dataKey="Selection Rate" fill="#1B3A60" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="FPR"            fill="#A0621A" radius={[4, 4, 0, 0]} />
+                          <Bar dataKey="TPR"            fill="#1A5480" radius={[4, 4, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
                     <div className="data-table-wrap">
                       <table className="data-table">
-                        <thead><tr><th>Group</th><th>Selection Rate</th><th>FPR</th><th>TPR</th></tr></thead>
+                        <thead>
+                          <tr><th>Group</th><th>Selection Rate</th><th>FPR</th><th>TPR</th></tr>
+                        </thead>
                         <tbody>
                           {Object.entries(result.group_metrics).map(([g, m]) => (
                             <tr key={g}>
                               <td>{g}</td>
                               <td>{(Number(m.selection_rate) * 100).toFixed(1)}%</td>
                               <td>{(Number(m.false_positive_rate || 0) * 100).toFixed(1)}%</td>
-                              <td>{(Number(m.true_positive_rate || 0) * 100).toFixed(1)}%</td>
+                              <td>{(Number(m.true_positive_rate  || 0) * 100).toFixed(1)}%</td>
                             </tr>
                           ))}
                         </tbody>
@@ -991,17 +1017,15 @@ function AuditPage() {
 
 // ── BiasMapPage ─────────────────────────────────────────────────────────────
 function BiasMapPage({ setPage }) {
-  const [mapData] = useState(SEED_COMPLAINTS);
-  const [selected, setSelected] = useState(null);
-  const [filterDim, setFilterDim] = useState("all");
+  const [mapData]    = useState(SEED_COMPLAINTS);
+  const [selected,   setSelected]  = useState(null);
+  const [filterDim,  setFilterDim] = useState("all");
 
   const maxCount = useMemo(() => Math.max(...mapData.map(d => d.count)), [mapData]);
-
-  const filtered = useMemo(() =>
+  const filtered  = useMemo(() =>
     filterDim === "all" ? mapData : mapData.filter(d => d.dominant === filterDim),
     [mapData, filterDim]
   );
-
   const totals = useMemo(() => {
     const t = { caste: 0, religion: 0, gender: 0, region: 0 };
     mapData.forEach(d => { t[d.dominant] = (t[d.dominant] || 0) + d.count; });
@@ -1011,12 +1035,11 @@ function BiasMapPage({ setPage }) {
   return (
     <div className="page-content">
       <div className="page-hero">
-        <div className="page-hero-eyebrow">Community Data - Aggregated & Anonymized</div>
+        <div className="page-hero-eyebrow">Community Data — Aggregated & Anonymized</div>
         <h1>India AI Bias Map</h1>
         <p>Where is algorithmic discrimination being reported? Real-time aggregated data from citizen reports. All submissions are anonymous.</p>
       </div>
 
-      {/* Summary */}
       <div className="bias-summary-row">
         {Object.entries(totals).map(([dim, n]) => (
           <div key={dim} className="bias-summary-card" style={{ borderTopColor: BIAS_COLORS[dim] }}>
@@ -1029,14 +1052,15 @@ function BiasMapPage({ setPage }) {
       </div>
 
       <div className="map-layout">
-        {/* Map */}
         <div className="map-container">
           <div className="map-filter-row">
             {["all", "caste", "religion", "gender", "region"].map(d => (
               <button
                 key={d}
                 className={`filter-btn${filterDim === d ? " active" : ""}`}
-                style={filterDim === d && d !== "all" ? { background: BIAS_COLORS[d], color: "#fff", borderColor: BIAS_COLORS[d] } : {}}
+                style={filterDim === d && d !== "all"
+                  ? { background: BIAS_COLORS[d] + "22", color: BIAS_COLORS[d], borderColor: BIAS_COLORS[d] + "55" }
+                  : {}}
                 onClick={() => setFilterDim(d)}
               >
                 {d === "all" ? "All Bias Types" : d.charAt(0).toUpperCase() + d.slice(1)}
@@ -1044,25 +1068,25 @@ function BiasMapPage({ setPage }) {
             ))}
           </div>
           <svg viewBox={`0 0 ${MAP_W} ${MAP_H}`} className="india-map" preserveAspectRatio="xMidYMid meet">
-            {/* simplified outline */}
-            <rect width={MAP_W} height={MAP_H} fill="#f8fafc" rx="8" />
-            <text x={MAP_W/2} y={MAP_H/2} textAnchor="middle" fill="#e2e8f0" fontSize="72" fontWeight="bold">
+            <rect width={MAP_W} height={MAP_H} fill="#F2EDE3" rx="6" />
+            <text x={MAP_W / 2} y={MAP_H / 2} textAnchor="middle" fill="rgba(28,26,23,0.04)"
+              fontSize="80" fontWeight="700" fontFamily="'DM Serif Display', Georgia, serif">
               India
             </text>
             {INDIA_CITIES.map(city => {
               const [cx, cy] = cityToSVG(city.lat, city.lon);
               const d = filtered.find(c => c.city === city.name);
-              if (!d) return <circle key={city.name} cx={cx} cy={cy} r={4} fill="#cbd5e1" opacity={0.4} />;
+              if (!d) return <circle key={city.name} cx={cx} cy={cy} r={4} fill="rgba(28,26,23,0.10)" />;
               const r = 8 + (d.count / maxCount) * 22;
               const col = BIAS_COLORS[d.dominant];
               return (
                 <g key={city.name} onClick={() => setSelected(selected?.city === city.name ? null : d)} style={{ cursor: "pointer" }}>
-                  <circle cx={cx} cy={cy} r={r + 4} fill={col} opacity={0.15} />
-                  <circle cx={cx} cy={cy} r={r} fill={col} opacity={0.75}
-                    stroke={selected?.city === city.name ? "#0f2243" : col}
-                    strokeWidth={selected?.city === city.name ? 2.5 : 0} />
-                  <text cx={cx} cy={cy} textAnchor="middle" dominantBaseline="middle" fill="#fff"
-                    fontSize={r > 14 ? 9 : 7} fontWeight="600" pointerEvents="none">
+                  <circle cx={cx} cy={cy} r={r + 6} fill={col} opacity={0.12} />
+                  <circle cx={cx} cy={cy} r={r}     fill={col} opacity={0.85}
+                    stroke={selected?.city === city.name ? "#1C1A17" : col}
+                    strokeWidth={selected?.city === city.name ? 2 : 0} />
+                  <text cx={cx} cy={cy} textAnchor="middle" dominantBaseline="middle"
+                    fill="#FDFAF5" fontSize={r > 14 ? 9 : 7} fontWeight="700" pointerEvents="none">
                     {d.count}
                   </text>
                 </g>
@@ -1071,7 +1095,6 @@ function BiasMapPage({ setPage }) {
           </svg>
         </div>
 
-        {/* Sidebar */}
         <aside className="map-sidebar">
           {selected ? (
             <div className="map-detail-card">
@@ -1093,7 +1116,7 @@ function BiasMapPage({ setPage }) {
             </div>
           ) : (
             <div className="map-detail-card map-empty">
-              <p>Click any city dot to see details</p>
+              <p>Click any city bubble to see details</p>
             </div>
           )}
 
@@ -1132,17 +1155,17 @@ function BiasMapPage({ setPage }) {
 // ── CitizenPage ─────────────────────────────────────────────────────────────
 function CitizenPage() {
   const [form, setForm] = useState({
-    domain: "hiring",
-    bias_type: "caste",
-    description: "",
-    state: "",
-    organization_type: "",
-    impact: "",
+    domain:               "hiring",
+    bias_type:            "caste",
+    description:          "",
+    state:                "",
+    organization_type:    "",
+    impact:               "",
     consent_to_aggregate: true,
   });
   const [loading, setLoading] = useState(false);
-  const [result, setResult] = useState(null);
-  const [error, setError] = useState("");
+  const [result,  setResult]  = useState(null);
+  const [error,   setError]   = useState("");
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -1152,11 +1175,8 @@ function CitizenPage() {
     try {
       const data = await apiPost("/citizen/report", form);
       setResult(data);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
+    } catch (e) { setError(e.message); }
+    finally { setLoading(false); }
   };
 
   if (result) {
@@ -1167,11 +1187,13 @@ function CitizenPage() {
           <p>Your anonymous report has been recorded and will contribute to India's AI bias dataset.</p>
         </div>
         <div className="report-success">
-          <div className="success-icon">✓</div>
-          <h3>Thank you for reporting</h3>
-          <p className="report-id">Report ID: <code>{result.report_id}</code></p>
+          <div className="success-icon"><CheckCircle2 size={30} /></div>
+          <h3 style={{ color: "var(--text-1)", fontWeight: 700 }}>Thank you for reporting</h3>
+          <p style={{ color: "var(--text-3)", fontSize: 14 }}>
+            Report ID: <code>{result.report_id}</code>
+          </p>
           {result.preliminary_assessment && (
-            <div className="narrative-box" style={{ marginTop: "24px" }}>
+            <div className="narrative-box" style={{ width: "100%", marginTop: "8px", textAlign: "left" }}>
               <h4>AI Assessment</h4>
               <p>{result.preliminary_assessment}</p>
             </div>
@@ -1182,7 +1204,9 @@ function CitizenPage() {
               <ul>
                 {result.resources.map((r, i) => (
                   <li key={i}>
-                    {r.url ? <a href={r.url} target="_blank" rel="noopener noreferrer">{r.name}</a> : r.name || r}
+                    {r.url
+                      ? <a href={r.url} target="_blank" rel="noopener noreferrer">{r.name}</a>
+                      : r.name || r}
                   </li>
                 ))}
               </ul>
@@ -1197,7 +1221,7 @@ function CitizenPage() {
   return (
     <div className="page-content">
       <div className="page-hero">
-        <div className="page-hero-eyebrow">Anonymous - Aggregated Data Only</div>
+        <div className="page-hero-eyebrow">Anonymous — Aggregated Data Only</div>
         <h1>Report AI Bias</h1>
         <p>Have you experienced discrimination from an AI system? Report it anonymously. Your data contributes to India's first AI bias map and drives policy change.</p>
       </div>
@@ -1218,8 +1242,11 @@ function CitizenPage() {
             <label>Type of bias</label>
             <div className="tab-row">
               {DIMENSIONS.map(d => (
-                <button key={d.key} className={`tab-btn${form.bias_type === d.key ? " active" : ""}`}
-                  style={form.bias_type === d.key ? { background: BIAS_COLORS[d.key], borderColor: BIAS_COLORS[d.key], color: "#fff" } : {}}
+                <button key={d.key}
+                  className={`tab-btn${form.bias_type === d.key ? " active" : ""}`}
+                  style={form.bias_type === d.key
+                    ? { background: BIAS_COLORS[d.key] + "18", borderColor: BIAS_COLORS[d.key] + "55", color: BIAS_COLORS[d.key] }
+                    : {}}
                   onClick={() => set("bias_type", d.key)}>{d.label}</button>
               ))}
             </div>
@@ -1228,8 +1255,7 @@ function CitizenPage() {
           <div className="field-group">
             <label>Describe what happened <span className="required">*</span></label>
             <textarea
-              className="text-area"
-              rows={5}
+              className="text-area" rows={5}
               placeholder="What AI system was involved? What decision did it make? How did it affect you?"
               value={form.description}
               onChange={e => set("description", e.target.value)}
@@ -1258,8 +1284,7 @@ function CitizenPage() {
           <div className="field-group">
             <label>Impact on you (optional)</label>
             <textarea
-              className="text-area"
-              rows={3}
+              className="text-area" rows={3}
               placeholder="How did this decision affect your life? (job rejection, loan denial, etc.)"
               value={form.impact}
               onChange={e => set("impact", e.target.value)}
@@ -1275,10 +1300,17 @@ function CitizenPage() {
             </label>
           </div>
 
-          {error && <div className="alert-error">{error}</div>}
+          {error && (
+            <div className="alert-error">
+              <AlertTriangle size={15} style={{ flexShrink: 0, marginTop: 1 }} />
+              {error}
+            </div>
+          )}
 
           <button className="btn-primary full-width" onClick={submit} disabled={loading}>
-            {loading ? <><span className="spinner-sm" /> Submitting...</> : "Submit Anonymous Report"}
+            {loading
+              ? <><Loader2 size={15} style={{ animation: "spin 0.75s linear infinite" }} /> Submitting...</>
+              : "Submit Anonymous Report"}
           </button>
         </div>
 
@@ -1314,12 +1346,11 @@ function CitizenPage() {
 // ── Root App ─────────────────────────────────────────────────────────────────
 export default function App() {
   const [page, setPage] = useState("home");
-
   return (
     <div className="app-root">
       <Navbar page={page} setPage={setPage} />
       <div className="page-wrapper">
-        {page === "home"    && <HomePage setPage={setPage} />}
+        {page === "home"    && <HomePage    setPage={setPage} />}
         {page === "probe"   && <ProbePage />}
         {page === "audit"   && <AuditPage />}
         {page === "map"     && <BiasMapPage setPage={setPage} />}
