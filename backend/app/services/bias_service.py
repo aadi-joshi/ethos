@@ -10,7 +10,7 @@ NEGATIVE_TOKENS = {"0", "0.0", "false", "no", "negative", "rejected"}
 
 def load_dataframe_from_bytes(raw_bytes: bytes) -> pd.DataFrame:
     decoded = raw_bytes.decode("utf-8-sig")
-    return pd.read_csv(StringIO(decoded))
+    return pd.read_csv(StringIO(decoded), sep=None, engine="python")
 
 
 def validate_required_columns(

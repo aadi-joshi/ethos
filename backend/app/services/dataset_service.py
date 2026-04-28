@@ -32,7 +32,7 @@ async def parse_csv_upload(file: UploadFile) -> tuple[list[str], dict, list[dict
         ) from error
 
     try:
-        dataframe = pd.read_csv(StringIO(decoded))
+        dataframe = pd.read_csv(StringIO(decoded), sep=None, engine="python")
     except Exception as error:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
