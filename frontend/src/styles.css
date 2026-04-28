@@ -1032,3 +1032,25 @@ input, select, textarea { font-family: inherit; }
   margin: 4px 0;
   cursor: pointer;
 }
+
+.sample-warn {
+  color: #A0621A;
+  background: rgba(160,98,26,0.08);
+  border: 1px solid rgba(160,98,26,0.2);
+  border-radius: 4px;
+  padding: 6px 10px;
+}
+
+.sample-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  background: rgba(160,98,26,0.07);
+  border: 1px solid rgba(160,98,26,0.2);
+  border-radius: 6px;
+  font-size: 12px;
+  color: #7A4B10;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}

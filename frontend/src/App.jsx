@@ -104,28 +104,7 @@ const BIAS_COLORS = {
   region:   "#FBB040",
 };
 
-const SEED_COMPLAINTS = [
-  { city: "Delhi",       count: 142, dominant: "caste",    domain: "hiring"     },
-  { city: "Mumbai",      count: 118, dominant: "gender",   domain: "lending"    },
-  { city: "Bengaluru",   count: 97,  dominant: "caste",    domain: "hiring"     },
-  { city: "Hyderabad",   count: 71,  dominant: "religion", domain: "hiring"     },
-  { city: "Chennai",     count: 63,  dominant: "caste",    domain: "education"  },
-  { city: "Kolkata",     count: 55,  dominant: "religion", domain: "hiring"     },
-  { city: "Pune",        count: 48,  dominant: "gender",   domain: "hiring"     },
-  { city: "Ahmedabad",   count: 41,  dominant: "religion", domain: "lending"    },
-  { city: "Jaipur",      count: 39,  dominant: "caste",    domain: "healthcare" },
-  { city: "Lucknow",     count: 37,  dominant: "caste",    domain: "hiring"     },
-  { city: "Patna",       count: 29,  dominant: "caste",    domain: "education"  },
-  { city: "Guwahati",    count: 24,  dominant: "region",   domain: "hiring"     },
-  { city: "Bhubaneswar", count: 18,  dominant: "caste",    domain: "lending"    },
-  { city: "Kochi",       count: 22,  dominant: "gender",   domain: "healthcare" },
-  { city: "Nagpur",      count: 17,  dominant: "caste",    domain: "hiring"     },
-  { city: "Varanasi",    count: 21,  dominant: "caste",    domain: "education"  },
-  { city: "Imphal",      count: 14,  dominant: "region",   domain: "hiring"     },
-  { city: "Chandigarh",  count: 26,  dominant: "gender",   domain: "hiring"     },
-  { city: "Ranchi",      count: 16,  dominant: "caste",    domain: "education"  },
-  { city: "Indore",      count: 19,  dominant: "caste",    domain: "hiring"     },
-];
+// No hardcoded seed data — the map shows only real citizen reports from Firestore.
 
 const DIMENSIONS = [
   { key: "caste",    label: "Caste",    desc: "Upper caste (Brahmin/Kshatriya) vs SC/ST surnames" },
@@ -253,10 +232,10 @@ function Footer({ setPage }) {
 // ── HomePage ────────────────────────────────────────────────────────────────
 function HomePage({ setPage }) {
   const stats = [
-    { n: "73%", desc: "of Indian AI hiring tools show measurable caste bias in our probes" },
-    { n: "4",   desc: "protected dimensions: caste, religion, gender, region" },
-    { n: "6",   desc: "fairness metrics computed per ML model audit" },
-    { n: "1st", desc: "India-specific LLM counterfactual bias probing platform" },
+    { n: "4",   desc: "India-specific bias dimensions: caste, religion, gender, region — not covered by any existing tool" },
+    { n: "6",   desc: "statistical fairness metrics per ML model audit, including DPD, DIR, and Theil Index" },
+    { n: "40+", desc: "counterfactual probe pairs per audit — statistically rigorous, Fisher's exact test significance" },
+    { n: "1st", desc: "LLM bias auditing platform built for India's unique social and legal context" },
   ];
   const features = [
     {
@@ -314,7 +293,7 @@ function HomePage({ setPage }) {
           </button>
         </div>
         <div className="hero-disclaimer">
-          Demo mode available — no API key required. See real bias in seconds.
+          Test any AI system in minutes. Use the built-in Gemini probe or connect your own API.
         </div>
       </section>
 
@@ -412,7 +391,7 @@ function HomePage({ setPage }) {
 function ProbePage() {
   const [dimension, setDimension]   = useState("caste");
   const [domain,    setDomain]      = useState("hiring");
-  const [mode,      setMode]        = useState("demo");
+  const [mode,      setMode]        = useState("gemini");
   const [template,  setTemplate]    = useState(DEFAULT_TEMPLATE);
   const [targetUrl, setTargetUrl]   = useState("");
   const [nPerGroup, setNPerGroup]   = useState(20);
@@ -426,7 +405,7 @@ function ProbePage() {
     try {
       const body = {
         dimension, domain,
-        demo_mode: mode === "demo",
+        demo_mode: false,
         target_type: mode === "live" ? "live_api" : mode,
         prompt_template: template,
         target_url: targetUrl || null,
@@ -489,12 +468,12 @@ function ProbePage() {
           </div>
 
           <div className="field-group">
-            <label>Target AI Mode</label>
+            <label>What to Test</label>
             <div className="tab-row">
               {[
-                { k: "demo",   l: "Demo"     },
-                { k: "gemini", l: "Gemini"   },
-                { k: "live",   l: "Live API" },
+                { k: "gemini", l: "Test Gemini"      },
+                { k: "sample", l: "Biased AI Demo"   },
+                { k: "live",   l: "Your API"         },
               ].map(m => (
                 <button
                   key={m.k}
@@ -503,15 +482,18 @@ function ProbePage() {
                 >{m.l}</button>
               ))}
             </div>
-            {mode === "demo"   && <p className="field-hint">Pre-generated responses. No API key needed.</p>}
-            {mode === "gemini" && <p className="field-hint">Uses Gemini API key from server.</p>}
+            {mode === "gemini" && <p className="field-hint">Probes Gemini AI for demographic bias. Sends {nPerGroup * 2} identical prompts with different names.</p>}
+            {mode === "sample" && <p className="field-hint sample-warn">Educational simulation: probes a programmatically biased AI to show what bias detection looks like when discrimination is present.</p>}
             {mode === "live"   && (
-              <input
-                className="text-input"
-                placeholder="https://your-api.com/generate"
-                value={targetUrl}
-                onChange={e => setTargetUrl(e.target.value)}
-              />
+              <>
+                <p className="field-hint">Test your own AI system. Provide an endpoint that accepts {`{"prompt": "..."}`} and returns a text response.</p>
+                <input
+                  className="text-input"
+                  placeholder="https://your-api.com/generate"
+                  value={targetUrl}
+                  onChange={e => setTargetUrl(e.target.value)}
+                />
+              </>
             )}
           </div>
 
@@ -554,9 +536,13 @@ function ProbePage() {
             <div className="empty-state">
               <div className="empty-icon"><Crosshair size={28} /></div>
               <h3>Configure and run a probe</h3>
-              <p>Select a dimension, domain, and mode. In demo mode, results appear instantly with pre-generated data showing real bias patterns.</p>
+              <p>
+                Select a bias dimension and domain. <strong>Test Gemini</strong> probes Gemini AI itself
+                for demographic bias. <strong>Biased AI Demo</strong> runs against a controlled simulation
+                to show what detected bias looks like. <strong>Your API</strong> tests your own AI system.
+              </p>
               <button className="btn-blue" onClick={runProbe}>
-                Try Demo: Caste Bias in Hiring
+                Run Probe Now
               </button>
             </div>
           )}
@@ -565,12 +551,23 @@ function ProbePage() {
             <div className="loading-state">
               <div className="spinner" />
               <p>Running counterfactual probe...</p>
-              <p className="loading-sub">Sending {nPerGroup * 2} prompts with demographically-varied names</p>
+              <p className="loading-sub">
+                {mode === "sample"
+                  ? `Running simulation with ${nPerGroup * 2} probe pairs...`
+                  : `Sending ${nPerGroup * 2} identical prompts — only names differ. This may take ${mode === "gemini" ? "1-3 minutes" : "~30 seconds"}.`}
+              </p>
             </div>
           )}
 
           {result && (
             <>
+              {result.sample_mode && (
+                <div className="sample-banner">
+                  <AlertTriangle size={14} style={{ flexShrink: 0 }} />
+                  Educational simulation — these are responses from a programmatically biased AI, not a real system.
+                  The analysis below shows what this type of discrimination looks like and how it should be addressed.
+                </div>
+              )}
               {/* Risk banner */}
               <div className="risk-banner" style={{ color: rm.color }}>
                 <div className="risk-level-label">{result.risk_level}</div>
@@ -578,7 +575,7 @@ function ProbePage() {
                   {result.risk_level === "CRITICAL" || result.risk_level === "HIGH"
                     ? "Statistically significant bias detected"
                     : result.risk_level === "MEDIUM"
-                    ? "Moderate bias detected"
+                    ? "Moderate bias pattern detected"
                     : "No significant bias detected"}
                 </div>
                 {result.statistically_significant && (
@@ -681,22 +678,29 @@ function ProbePage() {
               {activeTab === "examples" && (
                 <div className="tab-content">
                   <h4>Differential Output Examples</h4>
-                  <p className="tab-desc">Identical prompts — only the name changed.</p>
-                  {result.differential_examples?.map((ex, i) => (
-                    <div key={i} className="example-pair">
-                      <div className="example-half example-a">
-                        <div className="example-name">{ex.group_a_name}</div>
-                        <div className="example-outcome yes">{ex.group_a_decision}</div>
-                        <div className="example-text">{ex.group_a_reason}</div>
-                      </div>
-                      <div className="example-vs">vs</div>
-                      <div className="example-half example-b">
-                        <div className="example-name">{ex.group_b_name}</div>
-                        <div className="example-outcome no">{ex.group_b_decision}</div>
-                        <div className="example-text">{ex.group_b_reason}</div>
-                      </div>
-                    </div>
-                  ))}
+                  <p className="tab-desc">
+                    These are the AI system's responses to identical {result.domain} cases.
+                    Only the applicant's name was changed between each pair.
+                    {result.sample_mode && " (Simulated AI responses for educational demonstration.)"}
+                  </p>
+                  {result.differential_examples?.length > 0
+                    ? result.differential_examples.map((ex, i) => (
+                        <div key={i} className="example-pair">
+                          <div className="example-half example-a">
+                            <div className="example-name">{ex.group_a_name}</div>
+                            <div className="example-outcome yes">AI Said: {ex.group_a_decision}</div>
+                            <div className="example-text">{ex.group_a_reason}</div>
+                          </div>
+                          <div className="example-vs">vs</div>
+                          <div className="example-half example-b">
+                            <div className="example-name">{ex.group_b_name}</div>
+                            <div className="example-outcome no">AI Said: {ex.group_b_decision}</div>
+                            <div className="example-text">{ex.group_b_reason}</div>
+                          </div>
+                        </div>
+                      ))
+                    : <p className="field-hint">No clear differential pairs found — the AI gave similar outcomes to both groups. This is a good sign.</p>
+                  }
                 </div>
               )}
 
@@ -1022,35 +1026,26 @@ function AuditPage() {
 
 // ── BiasMapPage ─────────────────────────────────────────────────────────────
 function BiasMapPage({ setPage }) {
-  const [mapData, setMapData] = useState(SEED_COMPLAINTS);
+  const [mapData, setMapData] = useState([]);
+  const [mapLoading, setMapLoading] = useState(true);
   useEffect(() => {
     fetch(`${API}/citizen/map-data`)
       .then(r => r.json())
-      .then(d => {
-        if (!d.cities?.length) return;
-        setMapData(prev => {
-          const live = new Map(d.cities.map(c => [c.city, c]));
-          return prev.map(s => {
-            const l = live.get(s.city);
-            if (!l) return s;
-            const w = Math.min(l.total / (l.total + s.count), 0.4);
-            return { ...s, count: Math.round(s.count * (1 - w) + l.total * w) };
-          });
-        });
-      })
-      .catch(() => {});
+      .then(d => { if (d.cities) setMapData(d.cities); })
+      .catch(() => {})
+      .finally(() => setMapLoading(false));
   }, []);
   const [selected,   setSelected]  = useState(null);
   const [filterDim,  setFilterDim] = useState("all");
 
-  const maxCount = useMemo(() => Math.max(...mapData.map(d => d.count)), [mapData]);
+  const maxCount = useMemo(() => mapData.length ? Math.max(...mapData.map(d => d.count)) : 1, [mapData]);
   const filtered  = useMemo(() =>
     filterDim === "all" ? mapData : mapData.filter(d => d.dominant === filterDim),
     [mapData, filterDim]
   );
   const totals = useMemo(() => {
-    const t = { caste: 0, religion: 0, gender: 0, region: 0 };
-    mapData.forEach(d => { t[d.dominant] = (t[d.dominant] || 0) + d.count; });
+    const t = {};
+    mapData.forEach(d => { t[d.dominant] = (t[d.dominant] || 0) + (d.total || d.count || 0); });
     return t;
   }, [mapData]);
 
@@ -1095,21 +1090,30 @@ function BiasMapPage({ setPage }) {
               fontSize="80" fontWeight="700" fontFamily="'DM Serif Display', Georgia, serif">
               India
             </text>
-            {INDIA_CITIES.map(city => {
-              const [cx, cy] = cityToSVG(city.lat, city.lon);
-              const d = filtered.find(c => c.city === city.name);
-              if (!d) return <circle key={city.name} cx={cx} cy={cy} r={4} fill="rgba(28,26,23,0.10)" />;
-              const r = 8 + (d.count / maxCount) * 22;
-              const col = BIAS_COLORS[d.dominant];
+            {mapLoading && (
+              <text x={MAP_W / 2} y={MAP_H / 2 + 40} textAnchor="middle" fill="rgba(28,26,23,0.35)" fontSize="14">
+                Loading reports...
+              </text>
+            )}
+            {!mapLoading && mapData.length === 0 && (
+              <text x={MAP_W / 2} y={MAP_H / 2 + 40} textAnchor="middle" fill="rgba(28,26,23,0.35)" fontSize="13">
+                No reports yet — submit the first one
+              </text>
+            )}
+            {filtered.map(d => {
+              const [cx, cy] = cityToSVG(d.lat, d.lon);
+              const cnt = d.total || d.count || 0;
+              const r = 10 + (cnt / maxCount) * 24;
+              const col = BIAS_COLORS[d.dominant] || "#8B7355";
               return (
-                <g key={city.name} onClick={() => setSelected(selected?.city === city.name ? null : d)} style={{ cursor: "pointer" }}>
+                <g key={d.city} onClick={() => setSelected(selected?.city === d.city ? null : d)} style={{ cursor: "pointer" }}>
                   <circle cx={cx} cy={cy} r={r + 6} fill={col} opacity={0.12} />
                   <circle cx={cx} cy={cy} r={r}     fill={col} opacity={0.85}
-                    stroke={selected?.city === city.name ? "#1C1A17" : col}
-                    strokeWidth={selected?.city === city.name ? 2 : 0} />
-                  <text cx={cx} cy={cy} textAnchor="middle" dominantBaseline="middle"
+                    stroke={selected?.city === d.city ? "#1C1A17" : col}
+                    strokeWidth={selected?.city === d.city ? 2 : 0} />
+                  <text x={cx} y={cy} textAnchor="middle" dominantBaseline="middle"
                     fill="#FDFAF5" fontSize={r > 14 ? 9 : 7} fontWeight="700" pointerEvents="none">
-                    {d.count}
+                    {cnt}
                   </text>
                 </g>
               );
@@ -1121,7 +1125,7 @@ function BiasMapPage({ setPage }) {
           {selected ? (
             <div className="map-detail-card">
               <div className="map-detail-city">{selected.city}</div>
-              <div className="map-detail-count">{selected.count} reports</div>
+              <div className="map-detail-count">{selected.total || selected.count} reports</div>
               <div className="map-detail-row">
                 <span>Dominant bias</span>
                 <span className="map-detail-val" style={{ color: BIAS_COLORS[selected.dominant] }}>
@@ -1156,13 +1160,16 @@ function BiasMapPage({ setPage }) {
 
           <div className="top-cities">
             <div className="legend-title">Top Cities by Reports</div>
-            {[...mapData].sort((a, b) => b.count - a.count).slice(0, 6).map(d => (
-              <div key={d.city} className="top-city-row" onClick={() => setSelected(d)} style={{ cursor: "pointer" }}>
-                <span className="top-city-dot" style={{ background: BIAS_COLORS[d.dominant] }} />
-                <span className="top-city-name">{d.city}</span>
-                <span className="top-city-count">{d.count}</span>
-              </div>
-            ))}
+            {mapData.length === 0
+              ? <p className="legend-hint">No reports yet. Be the first!</p>
+              : [...mapData].sort((a, b) => (b.total || b.count || 0) - (a.total || a.count || 0)).slice(0, 6).map(d => (
+                <div key={d.city} className="top-city-row" onClick={() => setSelected(d)} style={{ cursor: "pointer" }}>
+                  <span className="top-city-dot" style={{ background: BIAS_COLORS[d.dominant] || "#8B7355" }} />
+                  <span className="top-city-name">{d.city}</span>
+                  <span className="top-city-count">{d.total || d.count}</span>
+                </div>
+              ))
+            }
           </div>
 
           <button className="btn-blue full-width" onClick={() => setPage("citizen")}>

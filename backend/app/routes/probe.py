@@ -15,15 +15,15 @@ _probe_service = ProbeService()
 async def run_probe(request: ProbeRunRequest) -> dict:
     """
     Run a counterfactual bias probe on an AI system.
-    In demo mode, uses pre-generated responses showing real bias patterns.
-    In live mode, sends probes to the provided target URL.
-    In gemini mode, uses Gemini as the target AI under test.
+    target_type: 'sample' (deterministic bias simulator), 'gemini' (probe Gemini itself),
+                 or 'live_api' (probe an external API endpoint).
     """
     try:
-        if request.target_type == "demo" or request.demo_mode:
-            result = _probe_service.run_demo_probe(
+        if request.target_type == "sample":
+            result = _probe_service.run_sample_probe(
                 dimension=request.dimension,
                 domain=request.domain,
+                n_per_group=min(request.n_per_group, 20),
                 group_a_key=request.group_a_key,
                 group_b_key=request.group_b_key,
             )

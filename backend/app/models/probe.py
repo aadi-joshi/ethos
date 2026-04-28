@@ -8,12 +8,12 @@ from pydantic import BaseModel
 class ProbeRunRequest(BaseModel):
     dimension: str                          # caste | religion | gender | region
     domain: str                             # hiring | lending | education | healthcare
-    demo_mode: bool = True                  # use pre-generated demo data
-    prompt_template: Optional[str] = None   # user's custom template
-    target_url: Optional[str] = None        # external AI endpoint (live mode)
-    target_type: str = "demo"               # "demo" | "live_api" | "gemini"
-    n_per_group: int = 20
-    group_a_key: Optional[str] = None       # override default group pairing
+    demo_mode: bool = False                 # legacy field, ignored — use target_type
+    prompt_template: Optional[str] = None  # user's custom template
+    target_url: Optional[str] = None       # external AI endpoint (live_api mode)
+    target_type: str = "gemini"            # "gemini" | "sample" | "live_api"
+    n_per_group: int = 10
+    group_a_key: Optional[str] = None      # override default group pairing
     group_b_key: Optional[str] = None
 
 
@@ -29,7 +29,7 @@ class DifferentialExample(BaseModel):
 class ProbeResponse(BaseModel):
     dimension: str
     domain: str
-    demo_mode: bool
+    sample_mode: bool
     group_a_key: str
     group_b_key: str
     group_a_label: str

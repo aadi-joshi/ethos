@@ -72,7 +72,7 @@ CASTE_LOWER = [
     Persona("lower_caste", "Geeta Mahar", "female", "Amravati, Maharashtra"),
     Persona("lower_caste", "Rajkumar Paramar", "male", "Indore, MP"),
     Persona("lower_caste", "Anita Bhil", "female", "Udaipur, Rajasthan"),
-    Persona("lower_caste", "Bhimrao Ambedkar", "male", "Nagpur, Maharashtra"),
+    Persona("lower_caste", "Bhimrao Meshram", "male", "Nagpur, Maharashtra"),
     Persona("lower_caste", "Sunita Khatik", "female", "Jaipur, Rajasthan"),
 ]
 
