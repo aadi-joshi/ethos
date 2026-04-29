@@ -148,6 +148,23 @@ const CHART_STYLE = {
   legend: { wrapperStyle: { color: "#94A3B8", fontSize: 12 } },
 };
 
+// ── Simple markdown renderer ────────────────────────────────────────────────
+function formatText(text) {
+  if (!text) return null;
+  return text.split('\n').reduce((acc, line, i) => {
+    if (i > 0) acc.push(<br key={`br-${i}`} />);
+    const parts = line.split(/(\*\*[^*]+\*\*)/g);
+    parts.forEach((part, j) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        acc.push(<strong key={`${i}-${j}`}>{part.slice(2, -2)}</strong>);
+      } else {
+        acc.push(part);
+      }
+    });
+    return acc;
+  }, []);
+}
+
 // ── Brand mark SVG ──────────────────────────────────────────────────────────
 function BrandMark({ size = 24 }) {
   return (
@@ -637,7 +654,7 @@ function ProbePage() {
                 <div className="tab-content">
                   <div className="narrative-box">
                     <h4>AI Analysis</h4>
-                    <p>{result.narrative_analysis}</p>
+                    <p>{formatText(result.narrative_analysis)}</p>
                   </div>
                   <div className="stats-grid">
                     <div className="stat-item">
@@ -708,14 +725,14 @@ function ProbePage() {
               {activeTab === "remediation" && (
                 <div className="tab-content">
                   <h4>Remediation Plan</h4>
-                  <div className="narrative-box"><p>{result.remediation_plan}</p></div>
+                  <div className="narrative-box"><p>{formatText(result.remediation_plan)}</p></div>
                 </div>
               )}
 
               {activeTab === "compliance" && (
                 <div className="tab-content">
                   <h4>India Compliance Assessment</h4>
-                  <div className="narrative-box compliance"><p>{result.compliance_assessment}</p></div>
+                  <div className="narrative-box compliance"><p>{formatText(result.compliance_assessment)}</p></div>
                 </div>
               )}
             </>
@@ -756,7 +773,7 @@ function AuditPage() {
 
   const onAnalyze = useCallback(async () => {
     if (!file || !target || !sensitive) return;
-    setLoading(true); setError("");
+    setLoading(true); setError(""); setExplanation(null); setRecommendations(null);
     try {
       const fd = new FormData();
       fd.append("file", file);
@@ -765,11 +782,14 @@ function AuditPage() {
       if (groundTruth) fd.append("ground_truth_column", groundTruth);
       const data = await apiPostForm("/analyze", fd);
       setResult(data);
-      const expl = await apiPost("/explain", { fairness_metrics: data });
-      setExplanation(expl);
-      const rec  = await apiPost("/recommend", { overall_bias: data.overall_bias, flagged_issues: data.flagged_issues });
-      setRecommendations(rec);
       setActiveTab("overview");
+      // Fire explain and recommend in parallel, non-blocking — don't fail the whole analysis
+      apiPost("/explain", { fairness_metrics: data })
+        .then(expl => setExplanation(expl))
+        .catch(() => setExplanation({ explanation: "Explanation unavailable — Gemini may be rate-limited.", source: "fallback" }));
+      apiPost("/recommend", { overall_bias: data.overall_bias, flagged_issues: data.flagged_issues })
+        .then(rec => setRecommendations(rec))
+        .catch(() => {});
     } catch (e) { setError(e.message); }
     finally { setLoading(false); }
   }, [file, target, sensitive, groundTruth]);
@@ -999,7 +1019,7 @@ function AuditPage() {
                   <div className="tab-content">
                     <div className="narrative-box">
                       <h4>AI Explanation</h4>
-                      <p>{explanation?.explanation || "Loading..."}</p>
+                      <p>{formatText(explanation?.explanation) || "Loading..."}</p>
                     </div>
                   </div>
                 )}

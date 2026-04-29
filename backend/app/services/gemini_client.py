@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import asyncio
 import time
 
 from google import genai
@@ -44,3 +45,7 @@ class GeminiClient:
                 raise
 
         raise RuntimeError(f"Gemini rate limit exceeded after retries: {last_err}")
+
+    async def async_generate_text(self, prompt: str) -> str:
+        """Run generate_text in a thread pool so the async event loop is not blocked."""
+        return await asyncio.to_thread(self.generate_text, prompt)

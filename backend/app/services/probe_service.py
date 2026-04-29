@@ -289,7 +289,7 @@ class ProbeService:
     # Public API
     # ------------------------------------------------------------------
 
-    def run_sample_probe(
+    async def run_sample_probe(
         self,
         dimension: str,
         domain: str,
@@ -319,7 +319,7 @@ class ProbeService:
         responses_a = [_simulate_biased_response(p.name, domain, ga_key) for p in sample_a]
         responses_b = [_simulate_biased_response(p.name, domain, gb_key) for p in sample_b]
 
-        return self._compute_report(
+        return await self._compute_report(
             dimension=dimension,
             domain=domain,
             group_a_key=ga_key,
@@ -360,7 +360,7 @@ class ProbeService:
             self._probe_group(prompt_template, sample_b, target_url, request_headers or {}),
         )
 
-        return self._compute_report(
+        return await self._compute_report(
             dimension=dimension,
             domain=domain,
             group_a_key=ga_key,
@@ -394,10 +394,10 @@ class ProbeService:
         sample_a = random.sample(pool_a, min(n_per_group, len(pool_a)))
         sample_b = random.sample(pool_b, min(n_per_group, len(pool_b)))
 
-        responses_a = self._probe_group_gemini(prompt_template, sample_a)
-        responses_b = self._probe_group_gemini(prompt_template, sample_b)
+        responses_a = await self._probe_group_gemini(prompt_template, sample_a)
+        responses_b = await self._probe_group_gemini(prompt_template, sample_b)
 
-        return self._compute_report(
+        return await self._compute_report(
             dimension=dimension,
             domain=domain,
             group_a_key=ga_key,
@@ -414,16 +414,16 @@ class ProbeService:
     def _fill_template(self, template: str, persona: Persona) -> str:
         return template.format(name=persona.name, region_hint=persona.region_hint)
 
-    def _probe_group_gemini(
+    async def _probe_group_gemini(
         self, template: str, personas: list[Persona]
     ) -> list[dict[str, Any]]:
         results = []
         for i, p in enumerate(personas):
             if i > 0:
-                time.sleep(5)  # stay within free-tier 15 RPM limit
+                await asyncio.sleep(5)  # stay within free-tier 15 RPM limit
             prompt = self._fill_template(template, p)
             try:
-                response_text = self._gemini.generate_text(prompt)
+                response_text = await self._gemini.async_generate_text(prompt)
             except Exception as e:
                 response_text = f"ERROR: {e}"
             outcome = _extract_binary_outcome(response_text)
@@ -458,7 +458,7 @@ class ProbeService:
                 })
         return results
 
-    def _compute_report(
+    async def _compute_report(
         self,
         dimension: str,
         domain: str,
@@ -521,12 +521,14 @@ class ProbeService:
         label_a = GROUP_DISPLAY_LABELS.get(group_a_key, group_a_key)
         label_b = GROUP_DISPLAY_LABELS.get(group_b_key, group_b_key)
 
-        narrative = self._generate_narrative(
-            dimension, domain, label_a, label_b, rate_a, rate_b,
-            differential, p_value, significant, examples, risk, sample_mode
-        )
-        remediation = self._generate_remediation(
-            dimension, domain, differential, rate_a, rate_b, label_a, label_b
+        narrative, remediation = await asyncio.gather(
+            self._generate_narrative(
+                dimension, domain, label_a, label_b, rate_a, rate_b,
+                differential, p_value, significant, examples, risk, sample_mode
+            ),
+            self._generate_remediation(
+                dimension, domain, differential, rate_a, rate_b, label_a, label_b
+            ),
         )
         compliance = self._generate_compliance(dimension, differential, significant)
 
@@ -563,7 +565,7 @@ class ProbeService:
             ],
         }
 
-    def _generate_narrative(
+    async def _generate_narrative(
         self,
         dimension: str,
         domain: str,
@@ -617,7 +619,7 @@ class ProbeService:
         )
 
         try:
-            return self._gemini.generate_text(prompt)
+            return await self._gemini.async_generate_text(prompt)
         except Exception:
             return _FALLBACK_NARRATIVES.get(dimension) or self._fallback_narrative(
                 label_a, label_b, rate_a, rate_b, differential, significant, risk
@@ -643,7 +645,7 @@ class ProbeService:
             f"Risk level: {risk}. Immediate review of training data and decision logic is recommended."
         )
 
-    def _generate_remediation(
+    async def _generate_remediation(
         self,
         dimension: str, domain: str,
         differential: float,
@@ -667,7 +669,7 @@ class ProbeService:
         )
 
         try:
-            return self._gemini.generate_text(prompt)
+            return await self._gemini.async_generate_text(prompt)
         except Exception:
             return _FALLBACK_REMEDIATIONS.get(dimension) or self._fallback_remediation(dimension, domain, differential)
 

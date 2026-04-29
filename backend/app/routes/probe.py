@@ -20,7 +20,7 @@ async def run_probe(request: ProbeRunRequest) -> dict:
     """
     try:
         if request.target_type == "sample":
-            result = _probe_service.run_sample_probe(
+            result = await _probe_service.run_sample_probe(
                 dimension=request.dimension,
                 domain=request.domain,
                 n_per_group=min(request.n_per_group, 20),

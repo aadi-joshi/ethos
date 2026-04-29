@@ -45,12 +45,6 @@ async def parse_csv_upload(file: UploadFile) -> tuple[list[str], dict, list[dict
             detail="Dataset is empty.",
         )
 
-    if dataframe.isnull().values.any():
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Dataset contains missing data. Please clean missing values and try again.",
-        )
-
     columns = dataframe.columns.tolist()
     basic_stats = _build_basic_stats(dataframe)
     preview_rows = dataframe.head(5).to_dict(orient="records")
